@@ -5,6 +5,15 @@
 
 // This plugin automatically renames layers based on their content and structure
 
+// Constants
+const SHAPE_TYPES = ['RECTANGLE', 'ELLIPSE', 'POLYGON', 'STAR', 'VECTOR', 'LINE', 'BOOLEAN_OPERATION'] as const;
+const COMPONENT_TYPES = ['COMPONENT', 'COMPONENT_SET', 'INSTANCE'] as const;
+const CONTAINER_TYPES = ['FRAME', 'GROUP'] as const;
+
+type ShapeType = typeof SHAPE_TYPES[number];
+type ComponentType = typeof COMPONENT_TYPES[number];
+type ContainerType = typeof CONTAINER_TYPES[number];
+
 type ShapeNode = RectangleNode | EllipseNode | PolygonNode | StarNode | VectorNode | LineNode | BooleanOperationNode;
 type ContainerNode = FrameNode | GroupNode;
 
@@ -32,7 +41,7 @@ function findHeaderText(nodes: readonly SceneNode[]): string {
   }).characters;
 }
 
-// Helper function to get correct English plural form for "element"
+// Helper function to get correct plural form for "element"
 function getElementsCountText(count: number): string {
   const lastDigit = count % 10;
   const lastTwoDigits = count % 100;
@@ -49,7 +58,7 @@ function getElementsCountText(count: number): string {
 // Function to find header from a child container
 function findHeaderFromChild(parentNode: ContainerNode): string {
   const childContainers = parentNode.children.filter((child): child is ContainerNode => 
-    child.type === 'FRAME' || child.type === 'GROUP'
+    CONTAINER_TYPES.includes(child.type as ContainerType)
   );
   
   if (childContainers.length === 1) {
@@ -80,12 +89,12 @@ function getShapeInfo(node: ShapeNode): { colorHex: string; dimensions: string }
 
 // Function to check if a node is a component or instance
 function isComponent(node: SceneNode): boolean {
-  return ['COMPONENT', 'COMPONENT_SET', 'INSTANCE'].includes(node.type);
+  return COMPONENT_TYPES.includes(node.type as ComponentType);
 }
 
 // Function to get specific shape name
 function getShapeName(node: ShapeNode): string {
-  const shapeNames: Record<string, string> = {
+  const shapeNames: Record<ShapeType, string> = {
     'RECTANGLE': 'Rectangle',
     'ELLIPSE': ('width' in node && 'height' in node && node.width === node.height) ? 'Circle' : 'Ellipse',
     'POLYGON': 'Polygon',
@@ -95,7 +104,7 @@ function getShapeName(node: ShapeNode): string {
     'BOOLEAN_OPERATION': 'Shape'
   };
   
-  return shapeNames[node.type] || 'Element';
+  return shapeNames[node.type as ShapeType] || 'Element';
 }
 
 // Function to generate name based on node type
@@ -103,18 +112,18 @@ function generateName(node: SceneNode): string {
   if (isComponent(node)) return node.name;
   if (node.type === 'TEXT') return getTextContent(node) || 'Text';
   
-  if (node.type === 'FRAME' || node.type === 'GROUP') {
+  if (CONTAINER_TYPES.includes(node.type as ContainerType)) {
     const containerNode = node as ContainerNode;
     if (containerNode.children.length > 0) {
       const headerText = findHeaderText(containerNode.children) || findHeaderFromChild(containerNode);
       return headerText 
         ? `Container - ${headerText}`
-        : `Container - Empty`;
+        : `Container - ${getElementsCountText(containerNode.children.length)}`;
     }
     return 'Container - Empty';
   }
   
-  if (['RECTANGLE', 'ELLIPSE', 'POLYGON', 'STAR', 'VECTOR', 'LINE', 'BOOLEAN_OPERATION'].includes(node.type)) {
+  if (SHAPE_TYPES.includes(node.type as ShapeType)) {
     const shapeNode = node as ShapeNode;
     const shapeName = getShapeName(shapeNode);
     const { colorHex, dimensions } = getShapeInfo(shapeNode);
