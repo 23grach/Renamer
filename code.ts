@@ -5,238 +5,141 @@
 
 // This plugin automatically renames layers based on their content and structure
 
+type ShapeNode = RectangleNode | EllipseNode | PolygonNode | StarNode | VectorNode | LineNode | BooleanOperationNode;
+type ContainerNode = FrameNode | GroupNode;
+
 // Helper function to get text content from a node
 function getTextContent(node: SceneNode): string {
-  if (node.type === 'TEXT') {
-    return node.characters;
-  }
-  return '';
+  return node.type === 'TEXT' ? node.characters : '';
 }
 
 // Function to find header text within a container
 function findHeaderText(nodes: readonly SceneNode[]): string {
-  const textNodes = nodes.filter(node => node.type === 'TEXT') as TextNode[];
+  const textNodes = nodes.filter((node): node is TextNode => node.type === 'TEXT');
   
   if (textNodes.length === 0) return '';
   
-  // Find the node with largest font size or boldest weight
-  let headerNode = textNodes[0];
-  
-  for (const node of textNodes) {
-    // Handle font size safely
-    let currentFontSize = 0;
-    let headerFontSize = 0;
+  return textNodes.reduce((headerNode, currentNode) => {
+    const currentFontSize = typeof currentNode.fontSize === 'number' ? currentNode.fontSize : 0;
+    const headerFontSize = typeof headerNode.fontSize === 'number' ? headerNode.fontSize : 0;
+    const currentFontWeight = typeof currentNode.fontWeight === 'number' ? currentNode.fontWeight : 400;
+    const headerFontWeight = typeof headerNode.fontWeight === 'number' ? headerNode.fontWeight : 400;
     
-    if (typeof node.fontSize === 'number') {
-      currentFontSize = node.fontSize;
-    }
-    
-    if (typeof headerNode.fontSize === 'number') {
-      headerFontSize = headerNode.fontSize;
-    }
-    
-    // Handle font weight safely
-    let currentFontWeight = 400;
-    let headerFontWeight = 400;
-    
-    if (typeof node.fontWeight === 'number') {
-      currentFontWeight = node.fontWeight;
-    }
-    
-    if (typeof headerNode.fontWeight === 'number') {
-      headerFontWeight = headerNode.fontWeight;
-    }
-    
-    // Prioritize bold over medium and larger size
-    if (currentFontWeight > headerFontWeight || 
-        (currentFontWeight === headerFontWeight && currentFontSize > headerFontSize)) {
-      headerNode = node;
-    }
-  }
-  
-  return headerNode.characters;
+    return (currentFontWeight > headerFontWeight || 
+            (currentFontWeight === headerFontWeight && currentFontSize > headerFontSize))
+      ? currentNode
+      : headerNode;
+  }).characters;
 }
 
-// Helper function to get correct Russian plural form for "элемент"
+// Helper function to get correct English plural form for "element"
 function getElementsCountText(count: number): string {
   const lastDigit = count % 10;
   const lastTwoDigits = count % 100;
   
   if (lastDigit === 1 && lastTwoDigits !== 11) {
-    return `${count} элемент`;
+    return `${count} element`;
   } else if ([2, 3, 4].includes(lastDigit) && ![12, 13, 14].includes(lastTwoDigits)) {
-    return `${count} элемента`;
+    return `${count} elements`;
   } else {
-    return `${count} элементов`;
+    return `${count} elements`;
   }
 }
 
 // Function to find header from a child container
-function findHeaderFromChild(parentNode: FrameNode | GroupNode): string {
-  const childContainers = parentNode.children.filter(child => 
+function findHeaderFromChild(parentNode: ContainerNode): string {
+  const childContainers = parentNode.children.filter((child): child is ContainerNode => 
     child.type === 'FRAME' || child.type === 'GROUP'
   );
   
   if (childContainers.length === 1) {
-    const childContainer = childContainers[0];
-    if ('children' in childContainer) {
-      const childHeaderText = findHeaderText(childContainer.children);
-      if (childHeaderText) {
-        return childHeaderText;
-      }
-    }
+    const childHeaderText = findHeaderText(childContainers[0].children);
+    if (childHeaderText) return childHeaderText;
   }
   
   return '';
 }
 
 // Function to get shape characteristics
-function getShapeInfo(node: SceneNode): { colorHex: string; dimensions: string } {
-  let colorHex = '';
-  let dimensions = '';
-  
-  // Get fill color if available
-  if ('fills' in node && node.fills && Array.isArray(node.fills) && node.fills.length > 0) {
-    const fill = node.fills[0];
-    if (fill.type === 'SOLID' && fill.visible !== false) {
-      const color = fill.color;
-      // Convert RGB (0-1) to hex
-      const r = Math.round(color.r * 255).toString(16);
-      const g = Math.round(color.g * 255).toString(16);
-      const b = Math.round(color.b * 255).toString(16);
-      // Ensure 2 digits for each color component
-      const rHex = r.length === 1 ? '0' + r : r;
-      const gHex = g.length === 1 ? '0' + g : g;
-      const bHex = b.length === 1 ? '0' + b : b;
-      colorHex = `#${rHex}${gHex}${bHex}`;
-    }
-  }
-  
-  // Add size information for all shapes that have width and height
-  if ('width' in node && 'height' in node) {
-    const width = Math.round(node.width);
-    const height = Math.round(node.height);
-    dimensions = `${width}x${height}`;
-  }
-  
+function getShapeInfo(node: ShapeNode): { colorHex: string; dimensions: string } {
+  const colorHex = Array.isArray(node.fills) && 
+    node.fills.length > 0 && 
+    node.fills[0].type === 'SOLID' && 
+    node.fills[0].visible !== false
+    ? `#${Object.values(node.fills[0].color)
+        .map((c: unknown) => typeof c === 'number' ? Math.round(c * 255).toString(16).padStart(2, '0') : '00')
+        .join('')}`
+    : '';
+
+  const dimensions = 'width' in node && 'height' in node
+    ? `${Math.round(node.width)}x${Math.round(node.height)}`
+    : '';
+
   return { colorHex, dimensions };
 }
 
 // Function to check if a node is a component or instance
 function isComponent(node: SceneNode): boolean {
-  return node.type === 'COMPONENT' || 
-         node.type === 'COMPONENT_SET' || 
-         node.type === 'INSTANCE';
+  return ['COMPONENT', 'COMPONENT_SET', 'INSTANCE'].includes(node.type);
 }
 
 // Function to get specific shape name
-function getShapeName(node: SceneNode): string {
-  switch (node.type) {
-    case 'RECTANGLE':
-      return 'Прямоугольник';
-    case 'ELLIPSE':
-      // Check if it's a circle (same width and height)
-      if ('width' in node && 'height' in node && node.width === node.height) {
-        return 'Круг';
-      }
-      return 'Эллипс';
-    case 'POLYGON':
-      return 'Многоугольник';
-    case 'STAR':
-      return 'Звезда';
-    case 'VECTOR':
-      return 'Вектор';
-    case 'LINE':
-      return 'Линия';
-    case 'BOOLEAN_OPERATION':
-      return 'Фигура';
-    default:
-      return 'Элемент';
-  }
+function getShapeName(node: ShapeNode): string {
+  const shapeNames: Record<string, string> = {
+    'RECTANGLE': 'Rectangle',
+    'ELLIPSE': ('width' in node && 'height' in node && node.width === node.height) ? 'Circle' : 'Ellipse',
+    'POLYGON': 'Polygon',
+    'STAR': 'Star',
+    'VECTOR': 'Vector',
+    'LINE': 'Line',
+    'BOOLEAN_OPERATION': 'Shape'
+  };
+  
+  return shapeNames[node.type] || 'Element';
 }
 
 // Function to generate name based on node type
 function generateName(node: SceneNode): string {
-  // Don't rename components or instances directly
-  if (isComponent(node)) {
-    return node.name;
-  }
+  if (isComponent(node)) return node.name;
+  if (node.type === 'TEXT') return getTextContent(node) || 'Text';
   
-  // For text layers, use the text content
-  if (node.type === 'TEXT') {
-    const textContent = getTextContent(node);
-    return textContent || 'Text';
-  }
-  
-  // For Container concept - simple naming without colors or dimensions
   if (node.type === 'FRAME' || node.type === 'GROUP') {
-    if ('children' in node && node.children.length > 0) {
-      // Try to find header text directly in this container
-      const headerText = findHeaderText(node.children);
-      if (headerText) {
-        return `Контейнер - ${headerText}`;
-      }
-      
-      // If no header found, try to get it from a child container
-      const childHeaderText = findHeaderFromChild(node);
-      if (childHeaderText) {
-        return `Контейнер - ${childHeaderText}`;
-      }
-      
-      // If still no header found, show element count with proper word form
-      return `Контейнер - ${getElementsCountText(node.children.length)}`;
+    const containerNode = node as ContainerNode;
+    if (containerNode.children.length > 0) {
+      const headerText = findHeaderText(containerNode.children) || findHeaderFromChild(containerNode);
+      return headerText 
+        ? `Container - ${headerText}`
+        : `Container - Empty`;
     }
-    return 'Контейнер - Пустой';
+    return 'Container - Empty';
   }
   
-  // For basic shapes - detailed naming with color and dimensions
-  if (node.type === 'RECTANGLE' || 
-      node.type === 'ELLIPSE' || 
-      node.type === 'POLYGON' || 
-      node.type === 'STAR' || 
-      node.type === 'VECTOR' || 
-      node.type === 'LINE' || 
-      node.type === 'BOOLEAN_OPERATION') {
+  if (['RECTANGLE', 'ELLIPSE', 'POLYGON', 'STAR', 'VECTOR', 'LINE', 'BOOLEAN_OPERATION'].includes(node.type)) {
+    const shapeNode = node as ShapeNode;
+    const shapeName = getShapeName(shapeNode);
+    const { colorHex, dimensions } = getShapeInfo(shapeNode);
     
-    // Get shape name
-    const shapeName = getShapeName(node);
-    
-    // Get shape details (color, size, etc)
-    const { colorHex, dimensions } = getShapeInfo(node);
-    
-    // Create the name with just shape information, without headers
-    let name = shapeName;
-    if (colorHex) name += ` - ${colorHex}`;
-    if (dimensions) name += ` - ${dimensions}`;
-    return name;
+    return [shapeName, colorHex, dimensions]
+      .filter(Boolean)
+      .join(' - ');
   }
   
-  // Default case, keep original name
   return node.name;
 }
 
 // Recursive function to rename a node and all its children
 function renameNodeRecursively(node: SceneNode): void {
-  // Don't rename components or instances themselves, but process their children
   if (isComponent(node)) {
-    // Process children recursively, but don't rename the component itself
     if ('children' in node) {
-      for (const child of node.children) {
-        renameNodeRecursively(child);
-      }
+      node.children.forEach(renameNodeRecursively);
     }
     return;
   }
   
-  // Generate new name for the node
-  const newName = generateName(node);
-  node.name = newName;
+  node.name = generateName(node);
   
-  // Process children recursively
   if ('children' in node) {
-    for (const child of node.children) {
-      renameNodeRecursively(child);
-    }
+    node.children.forEach(renameNodeRecursively);
   }
 }
 
@@ -246,21 +149,14 @@ function renameSelectedLayers(): void {
   
   if (selection.length === 0) {
     figma.notify('Please select at least one layer');
+    figma.closePlugin();
     return;
   }
-
-  const notify = figma.notify('Renaming layers...', { timeout: 60000 });
   
-  for (const node of selection) {
-    renameNodeRecursively(node);
-  }
-
-  notify.cancel();
-  figma.notify(`Layers renamed successfully`);
+  selection.forEach(renameNodeRecursively);
+  figma.notify('Layers successfully renamed');
+  figma.closePlugin();
 }
 
-// Execute the renaming
-(() => {
-  renameSelectedLayers();
-  figma.closePlugin();
-})();
+// Register the plugin
+renameSelectedLayers();
