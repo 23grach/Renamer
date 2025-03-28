@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es2017",
-    "lib": ["es2017", "es2016"],
+    "target": "es6",
+    "lib": ["es6", "es2016"],
     "strict": true,
     "typeRoots": [
       "./node_modules/@types",

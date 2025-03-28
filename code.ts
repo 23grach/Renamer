@@ -1,13 +1,9 @@
-import { translations } from './translations';
-
 // This file holds the main code for plugins. Code in this file has access to
 // the *figma document* via the figma global object.
 // You can access browser APIs in the <script> tag inside "ui.html" which has a
 // full browser environment (See https://www.figma.com/plugin-docs/how-plugins-run).
 
 // This plugin automatically renames layers based on their content and structure
-
-let currentLanguage: 'ru' | 'en' = 'ru';
 
 // Helper function to get text content from a node
 function getTextContent(node: SceneNode): string {
@@ -61,21 +57,17 @@ function findHeaderText(nodes: readonly SceneNode[]): string {
   return headerNode.characters;
 }
 
-// Helper function to get correct plural form for elements
+// Helper function to get correct Russian plural form for "элемент"
 function getElementsCountText(count: number): string {
-  if (currentLanguage === 'ru') {
-    const lastDigit = count % 10;
-    const lastTwoDigits = count % 100;
-    
-    if (lastDigit === 1 && lastTwoDigits !== 11) {
-      return translations.withElements.ru.replace('{count}', count.toString());
-    } else if ([2, 3, 4].includes(lastDigit) && ![12, 13, 14].includes(lastTwoDigits)) {
-      return translations.withElements.ru.replace('{count}', count.toString());
-    } else {
-      return translations.withElements.ru.replace('{count}', count.toString());
-    }
+  const lastDigit = count % 10;
+  const lastTwoDigits = count % 100;
+  
+  if (lastDigit === 1 && lastTwoDigits !== 11) {
+    return `${count} элемент`;
+  } else if ([2, 3, 4].includes(lastDigit) && ![12, 13, 14].includes(lastTwoDigits)) {
+    return `${count} элемента`;
   } else {
-    return translations.withElements.en.replace('{count}', count.toString());
+    return `${count} элементов`;
   }
 }
 
@@ -106,119 +98,145 @@ function getShapeInfo(node: SceneNode): { colorHex: string; dimensions: string }
   // Get fill color if available
   if ('fills' in node && node.fills && Array.isArray(node.fills) && node.fills.length > 0) {
     const fill = node.fills[0];
-    if (fill.type === 'SOLID' && fill.color) {
-      const { r, g, b } = fill.color;
-      colorHex = `#${Math.round(r * 255).toString(16).padStart(2, '0')}${Math.round(g * 255).toString(16).padStart(2, '0')}${Math.round(b * 255).toString(16).padStart(2, '0')}`;
+    if (fill.type === 'SOLID' && fill.visible !== false) {
+      const color = fill.color;
+      // Convert RGB (0-1) to hex
+      const r = Math.round(color.r * 255).toString(16);
+      const g = Math.round(color.g * 255).toString(16);
+      const b = Math.round(color.b * 255).toString(16);
+      // Ensure 2 digits for each color component
+      const rHex = r.length === 1 ? '0' + r : r;
+      const gHex = g.length === 1 ? '0' + g : g;
+      const bHex = b.length === 1 ? '0' + b : b;
+      colorHex = `#${rHex}${gHex}${bHex}`;
     }
   }
   
-  // Get dimensions
+  // Add size information for all shapes that have width and height
   if ('width' in node && 'height' in node) {
-    dimensions = `${Math.round(node.width)}x${Math.round(node.height)}`;
+    const width = Math.round(node.width);
+    const height = Math.round(node.height);
+    dimensions = `${width}x${height}`;
   }
   
   return { colorHex, dimensions };
 }
 
-// Function to check if node is a component
+// Function to check if a node is a component or instance
 function isComponent(node: SceneNode): boolean {
-  return node.type === 'COMPONENT' || node.type === 'COMPONENT_SET' || 
-         (node.type === 'INSTANCE' && node.mainComponent !== null);
+  return node.type === 'COMPONENT' || 
+         node.type === 'COMPONENT_SET' || 
+         node.type === 'INSTANCE';
 }
 
-// Function to get shape name based on characteristics
+// Function to get specific shape name
 function getShapeName(node: SceneNode): string {
-  const { colorHex, dimensions } = getShapeInfo(node);
-  const parts = [];
-  
-  if (colorHex) {
-    parts.push(colorHex);
+  switch (node.type) {
+    case 'RECTANGLE':
+      return 'Прямоугольник';
+    case 'ELLIPSE':
+      // Check if it's a circle (same width and height)
+      if ('width' in node && 'height' in node && node.width === node.height) {
+        return 'Круг';
+      }
+      return 'Эллипс';
+    case 'POLYGON':
+      return 'Многоугольник';
+    case 'STAR':
+      return 'Звезда';
+    case 'VECTOR':
+      return 'Вектор';
+    case 'LINE':
+      return 'Линия';
+    case 'BOOLEAN_OPERATION':
+      return 'Фигура';
+    default:
+      return 'Элемент';
   }
-  
-  if (dimensions) {
-    parts.push(dimensions);
-  }
-  
-  return parts.join(' ');
 }
 
-// Function to generate name for a node
+// Function to generate name based on node type
 function generateName(node: SceneNode): string {
-  // Don't rename components
+  // Don't rename components or instances directly
   if (isComponent(node)) {
     return node.name;
   }
   
-  // Handle text nodes
+  // For text layers, use the text content
   if (node.type === 'TEXT') {
-    const text = node.characters;
-    if (text.length > 20) {
-      return `${translations.text[currentLanguage]} - ${text.substring(0, 20)}...`;
-    }
-    return text;
+    const textContent = getTextContent(node);
+    return textContent || 'Text';
   }
   
-  // Handle containers (frames and groups)
+  // For Container concept - simple naming without colors or dimensions
   if (node.type === 'FRAME' || node.type === 'GROUP') {
-    const container = node as FrameNode | GroupNode;
-    const children = container.children;
-    
-    // Count different types of elements
-    const textCount = children.filter(child => child.type === 'TEXT').length;
-    const buttonCount = children.filter(child => 
-      child.type === 'FRAME' && child.name.toLowerCase().includes('button')
-    ).length;
-    const fieldCount = children.filter(child => 
-      child.type === 'FRAME' && child.name.toLowerCase().includes('field')
-    ).length;
-    const cardCount = children.filter(child => 
-      child.type === 'FRAME' && child.name.toLowerCase().includes('card')
-    ).length;
-    
-    // Try to find header text
-    const headerText = findHeaderText(children) || findHeaderFromChild(container);
-    
-    // Build container name
-    let name = '';
-    
-    if (headerText) {
-      name = headerText;
-    } else if (buttonCount > 0) {
-      name = `${translations.button[currentLanguage]} ${getElementsCountText(buttonCount)}`;
-    } else if (fieldCount > 0) {
-      name = `${translations.form[currentLanguage]} ${translations.withFields[currentLanguage].replace('{count}', fieldCount.toString())}`;
-    } else if (cardCount > 0) {
-      name = `${translations.card[currentLanguage]} ${translations.withCards[currentLanguage].replace('{count}', cardCount.toString())}`;
-    } else {
-      name = `${translations.container[currentLanguage]} ${getElementsCountText(children.length)}`;
+    if ('children' in node && node.children.length > 0) {
+      // Try to find header text directly in this container
+      const headerText = findHeaderText(node.children);
+      if (headerText) {
+        return `Контейнер - ${headerText}`;
+      }
+      
+      // If no header found, try to get it from a child container
+      const childHeaderText = findHeaderFromChild(node);
+      if (childHeaderText) {
+        return `Контейнер - ${childHeaderText}`;
+      }
+      
+      // If still no header found, show element count with proper word form
+      return `Контейнер - ${getElementsCountText(node.children.length)}`;
     }
+    return 'Контейнер - Пустой';
+  }
+  
+  // For basic shapes - detailed naming with color and dimensions
+  if (node.type === 'RECTANGLE' || 
+      node.type === 'ELLIPSE' || 
+      node.type === 'POLYGON' || 
+      node.type === 'STAR' || 
+      node.type === 'VECTOR' || 
+      node.type === 'LINE' || 
+      node.type === 'BOOLEAN_OPERATION') {
     
+    // Get shape name
+    const shapeName = getShapeName(node);
+    
+    // Get shape details (color, size, etc)
+    const { colorHex, dimensions } = getShapeInfo(node);
+    
+    // Create the name with just shape information, without headers
+    let name = shapeName;
+    if (colorHex) name += ` - ${colorHex}`;
+    if (dimensions) name += ` - ${dimensions}`;
     return name;
   }
   
-  // Handle shapes
-  if (node.type === 'RECTANGLE' || node.type === 'ELLIPSE' || node.type === 'POLYGON' || node.type === 'STAR') {
-    return getShapeName(node);
-  }
-  
-  // Default case
+  // Default case, keep original name
   return node.name;
 }
 
-// Function to rename node and its children recursively
+// Recursive function to rename a node and all its children
 function renameNodeRecursively(node: SceneNode): void {
-  // Don't rename components
+  // Don't rename components or instances themselves, but process their children
   if (isComponent(node)) {
+    // Process children recursively, but don't rename the component itself
+    if ('children' in node) {
+      for (const child of node.children) {
+        renameNodeRecursively(child);
+      }
+    }
     return;
   }
   
-  // Rename current node
-  node.name = generateName(node);
+  // Generate new name for the node
+  const newName = generateName(node);
+  node.name = newName;
   
-  // Rename children if node is a container
+  // Process children recursively
   if ('children' in node) {
-    const container = node as FrameNode | GroupNode;
-    container.children.forEach(child => renameNodeRecursively(child));
+    for (const child of node.children) {
+      renameNodeRecursively(child);
+    }
   }
 }
 
@@ -227,21 +245,22 @@ function renameSelectedLayers(): void {
   const selection = figma.currentPage.selection;
   
   if (selection.length === 0) {
-    figma.notify('Пожалуйста, выберите слои для переименования');
+    figma.notify('Please select at least one layer');
     return;
   }
+
+  const notify = figma.notify('Renaming layers...', { timeout: 60000 });
   
-  selection.forEach(node => renameNodeRecursively(node));
-  figma.notify('Слои успешно переименованы');
+  for (const node of selection) {
+    renameNodeRecursively(node);
+  }
+
+  notify.cancel();
+  figma.notify(`Layers renamed successfully`);
 }
 
-// Handle messages from UI
-figma.ui.onmessage = async (msg) => {
-  if (msg.type === 'rename') {
-    currentLanguage = msg.language;
-    renameSelectedLayers();
-  }
-};
-
-// Show UI
-figma.showUI(__html__, { width: 300, height: 150 });
+// Execute the renaming
+(() => {
+  renameSelectedLayers();
+  figma.closePlugin();
+})();

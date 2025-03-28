@@ -2,12 +2,12 @@
   "name": "Renamer",
   "version": "1.0.0",
   "description": "Your Figma Plugin",
-  "main": "dist/code.js",
+  "main": "code.js",
   "scripts": {
-    "build": "webpack --mode=production",
-    "dev": "webpack --mode=development --watch",
+    "build": "tsc -p tsconfig.json",
     "lint": "eslint --ext .ts,.tsx --ignore-pattern node_modules .",
-    "lint:fix": "eslint --ext .ts,.tsx --ignore-pattern node_modules --fix ."
+    "lint:fix": "eslint --ext .ts,.tsx --ignore-pattern node_modules --fix .",
+    "watch": "npm run build -- --watch"
   },
   "author": "",
   "license": "",
@@ -17,11 +17,7 @@
     "@typescript-eslint/eslint-plugin": "^6.12.0",
     "@typescript-eslint/parser": "^6.12.0",
     "eslint": "^8.54.0",
-    "html-loader": "^4.2.0",
-    "ts-loader": "^9.5.1",
-    "typescript": "^5.3.2",
-    "webpack": "^5.89.0",
-    "webpack-cli": "^5.1.4"
+    "typescript": "^5.3.2"
   },
   "eslintConfig": {
     "extends": [
