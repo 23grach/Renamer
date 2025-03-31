@@ -1,10 +1,14 @@
-# Renamer 
+# Renamer
 
-The plugin automatically renames layers based on their contents, which helps to keep your Figma files organized. It is able to:
+Automatically renames layers based on their properties:
+- Shows dimensions (width × height)
+- Displays color information
+- Shows opacity values
+- Indicates effects (shadows, blurs)
+- Shows constraints
 
-- Highlight containers and elements to create a logical hierarchy
-- Define titles
-- Display element sizes and colors
-- Save component names
+Select layers and run the plugin to rename them according to your settings.
 
-The plugin greatly simplifies navigation through complex layouts and improves teamwork by making the file structure understandable for all project participants.
+---
+
+A Figma plugin that helps you keep your layers organized by automatically generating descriptive names based on their properties. Perfect for maintaining clean and consistent layer naming across your designs.
