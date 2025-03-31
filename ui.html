@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: Inter, sans-serif;
+      padding: 20px;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+    
+    .settings-section {
+      margin-bottom: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    
+    .setting-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    
+    .setting-item label {
+      margin-left: 8px;
+      flex: 1;
+    }
+    
+    .footer {
+      padding-top: 20px;
+      padding-bottom: 20px;
+      border-top: 1px solid #E5E5E5;
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+      background: white;
+      position: sticky;
+      bottom: 0;
+    }
+    
+    .footer a {
+      color: #18A0FB;
+      text-decoration: none;
+    }
+    
+    .footer a:hover {
+      text-decoration: underline;
+    }
+    
+    .version {
+      margin-top: 4px;
+      font-size: 10px;
+      color: #999;
+    }
+    
+    .version a {
+      color: #999;
+      text-decoration: none;
+    }
+    
+    .version a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="settings-section">
+    <h3>Layer Properties</h3>
+    <div class="setting-item">
+      <input type="checkbox" id="showDimensions" checked>
+      <label for="showDimensions">Show dimensions (width × height)</label>
+    </div>
+    <div class="setting-item">
+      <input type="checkbox" id="showColor" checked>
+      <label for="showColor">Show color</label>
+    </div>
+    <div class="setting-item">
+      <input type="checkbox" id="showOpacity" checked>
+      <label for="showOpacity">Show opacity</label>
+    </div>
+    <div class="setting-item">
+      <input type="checkbox" id="showEffects" checked>
+      <label for="showEffects">Show effects (shadows, blurs)</label>
+    </div>
+    <div class="setting-item">
+      <input type="checkbox" id="showConstraints" checked>
+      <label for="showConstraints">Show constraints</label>
+    </div>
+  </div>
+
+  <div class="footer">
+    Made with ❤️ by <a href="https://gr-ch.ru" target="_blank">grach</a>
+    <div class="version"><a href="https://github.com/23grach/Renamer" target="_blank">v2.0.0</a></div>
+  </div>
+
+  <script>
+    // Function to get current settings
+    function getCurrentSettings() {
+      return {
+        showDimensions: document.getElementById('showDimensions').checked,
+        showColor: document.getElementById('showColor').checked,
+        showOpacity: document.getElementById('showOpacity').checked,
+        showEffects: document.getElementById('showEffects').checked,
+        showConstraints: document.getElementById('showConstraints').checked
+      };
+    }
+
+    // Function to apply settings to UI
+    function applySettings(settings) {
+      document.getElementById('showDimensions').checked = settings.showDimensions;
+      document.getElementById('showColor').checked = settings.showColor;
+      document.getElementById('showOpacity').checked = settings.showOpacity;
+      document.getElementById('showEffects').checked = settings.showEffects;
+      document.getElementById('showConstraints').checked = settings.showConstraints;
+    }
+
+    // Save settings when window is about to close
+    window.addEventListener('beforeunload', () => {
+      const settings = getCurrentSettings();
+      parent.postMessage({ 
+        pluginMessage: { 
+          type: 'save-settings',
+          settings
+        }
+      }, '*');
+    });
+
+    window.onmessage = (event) => {
+      const message = event.data.pluginMessage;
+      
+      if (message.type === 'load-settings') {
+        applySettings(message.settings);
+      }
+    };
+  </script>
+</body>
+</html> 
