@@ -1,8 +1,30 @@
+# Figma plugin files
+Banner.png
+Icon.png
+Renamer-Banner.png
+Renamer-Icon.png
+
+# Cursor rules
+.cursor/
+
+# Node modules
+node_modules/
+
+# Build output
+dist/
+build/
+
+# IDE files
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
 # Node
 *.log
 *.log.*
-node_modules
 
 out/
-dist/
 code.js
