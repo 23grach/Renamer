@@ -69,55 +69,9 @@ function findHeaderFromChild(parentNode: ContainerNode): string {
   return '';
 }
 
-// Settings interface
-interface Settings {
-  showDimensions: boolean;
-  showColor: boolean;
-  showOpacity: boolean;
-  showEffects: boolean;
-  showConstraints: boolean;
-}
-
-// Default settings
-const defaultSettings: Settings = {
-  showDimensions: true,
-  showColor: true,
-  showOpacity: true,
-  showEffects: true,
-  showConstraints: true
-};
-
-// Current settings
-let currentSettings: Settings = defaultSettings;
-
-// Function to load settings
-function loadSettings(): void {
-  const savedSettings = figma.root.getPluginData('settings');
-  if (savedSettings) {
-    try {
-      currentSettings = JSON.parse(savedSettings);
-    } catch (e) {
-      console.error('Error loading settings:', e);
-      currentSettings = defaultSettings;
-    }
-  }
-}
-
-// Function to save settings
-function saveSettings(settings: Settings): void {
-  currentSettings = settings;
-  figma.root.setPluginData('settings', JSON.stringify(settings));
-}
-
-// Function to show settings UI
-function showSettings(): void {
-  figma.showUI(__html__, { width: 300, height: 400 });
-  figma.ui.postMessage({ type: 'load-settings', settings: currentSettings });
-}
-
-// Function to get shape characteristics with settings
+// Function to get shape characteristics
 function getShapeInfo(node: ShapeNode): { colorHex: string; dimensions: string } {
-  const colorHex = currentSettings.showColor && Array.isArray(node.fills) && 
+  const colorHex = Array.isArray(node.fills) && 
     node.fills.length > 0 && 
     node.fills[0].type === 'SOLID' && 
     node.fills[0].visible !== false
@@ -126,7 +80,7 @@ function getShapeInfo(node: ShapeNode): { colorHex: string; dimensions: string }
         .join('')}`
     : '';
 
-  const dimensions = currentSettings.showDimensions && 'width' in node && 'height' in node
+  const dimensions = 'width' in node && 'height' in node
     ? `${Math.round(node.width)}x${Math.round(node.height)}`
     : '';
 
@@ -153,7 +107,7 @@ function getShapeName(node: ShapeNode): string {
   return shapeNames[node.type as ShapeType] || 'Element';
 }
 
-// Function to generate name based on node type and settings
+// Function to generate name based on node type
 function generateName(node: SceneNode): string {
   if (isComponent(node)) return node.name;
   if (node.type === 'TEXT') return getTextContent(node) || 'Text';
@@ -174,21 +128,9 @@ function generateName(node: SceneNode): string {
     const shapeName = getShapeName(shapeNode);
     const { colorHex, dimensions } = getShapeInfo(shapeNode);
     
-    const parts = [shapeName];
-    if (currentSettings.showColor && colorHex) parts.push(colorHex);
-    if (currentSettings.showDimensions && dimensions) parts.push(dimensions);
-    if (currentSettings.showOpacity && 'opacity' in shapeNode) {
-      parts.push(`${Math.round(shapeNode.opacity * 100)}%`);
-    }
-    if (currentSettings.showEffects && 'effects' in shapeNode && shapeNode.effects.length > 0) {
-      parts.push('with effects');
-    }
-    if (currentSettings.showConstraints && 'constraints' in shapeNode) {
-      const { horizontal, vertical } = shapeNode.constraints;
-      parts.push(`${horizontal}-${vertical}`);
-    }
-    
-    return parts.join(' - ');
+    return [shapeName, colorHex, dimensions]
+      .filter(Boolean)
+      .join(' - ');
   }
   
   return node.name;
@@ -225,26 +167,5 @@ function renameSelectedLayers(): void {
   figma.closePlugin();
 }
 
-// Handle messages from UI
-figma.ui.onmessage = async (msg) => {
-  if (msg.type === 'save-settings') {
-    saveSettings(msg.settings);
-    if (msg.closeWindow) {
-      figma.notify('Settings saved');
-      setTimeout(() => {
-        figma.closePlugin();
-      }, 100);
-    }
-  }
-};
-
-// Handle menu commands
-figma.on('run', ({ command }) => {
-  loadSettings();
-  
-  if (command === 'run') {
-    renameSelectedLayers();
-  } else if (command === 'settings') {
-    showSettings();
-  }
-});
+// Register the plugin
+renameSelectedLayers();

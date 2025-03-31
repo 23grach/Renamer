@@ -13,13 +13,6 @@
       overflow: hidden;
     }
     
-    .title {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 20px;
-      color: #333;
-    }
-    
     .settings-section {
       margin-bottom: 20px;
       overflow-y: auto;
@@ -35,7 +28,6 @@
     .setting-item label {
       margin-left: 8px;
       flex: 1;
-      font-size: 13px;
     }
     
     .footer {
@@ -76,8 +68,8 @@
   </style>
 </head>
 <body>
-  <div class="title">Layer Renaming Settings</div>
   <div class="settings-section">
+    <h3>Layer Properties</h3>
     <div class="setting-item">
       <input type="checkbox" id="showDimensions" checked>
       <label for="showDimensions">Show dimensions (width × height)</label>
@@ -132,24 +124,9 @@
       parent.postMessage({ 
         pluginMessage: { 
           type: 'save-settings',
-          settings,
-          closeWindow: true
+          settings
         }
       }, '*');
-    });
-
-    // Save settings when any checkbox changes
-    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-      checkbox.addEventListener('change', () => {
-        const settings = getCurrentSettings();
-        parent.postMessage({ 
-          pluginMessage: { 
-            type: 'save-settings',
-            settings,
-            closeWindow: false
-          }
-        }, '*');
-      });
     });
 
     window.onmessage = (event) => {

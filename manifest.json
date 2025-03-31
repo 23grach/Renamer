@@ -1,12 +1,16 @@
 {
   "name": "Renamer",
-  "id": "layer-renamer",
+  "id": "1488513323546007994",
   "api": "1.0.0",
   "main": "code.js",
   "ui": "ui.html",
   "capabilities": ["textreview"],
   "enableProposedApi": false,
   "editorType": ["figma"],
+  "networkAccess": {
+    "allowedDomains": ["none"]
+  },
+  "documentAccess": "dynamic-page",
   "menu": [
     {
       "name": "Run",
