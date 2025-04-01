@@ -109,6 +109,22 @@
       };
     }
 
+    // Function to save settings
+    function saveSettings() {
+      const settings = getCurrentSettings();
+      parent.postMessage({ 
+        pluginMessage: { 
+          type: 'save-settings',
+          settings
+        }
+      }, '*');
+    }
+
+    // Add event listeners to all checkboxes
+    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+      checkbox.addEventListener('change', saveSettings);
+    });
+
     // Function to apply settings to UI
     function applySettings(settings) {
       document.getElementById('showDimensions').checked = settings.showDimensions;
@@ -119,15 +135,7 @@
     }
 
     // Save settings when window is about to close
-    window.addEventListener('beforeunload', () => {
-      const settings = getCurrentSettings();
-      parent.postMessage({ 
-        pluginMessage: { 
-          type: 'save-settings',
-          settings
-        }
-      }, '*');
-    });
+    window.addEventListener('beforeunload', saveSettings);
 
     window.onmessage = (event) => {
       const message = event.data.pluginMessage;

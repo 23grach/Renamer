@@ -167,5 +167,42 @@ function renameSelectedLayers(): void {
   figma.closePlugin();
 }
 
-// Register the plugin
-renameSelectedLayers();
+// Default settings
+const DEFAULT_SETTINGS = {
+  showDimensions: true,
+  showColor: true,
+  showOpacity: true,
+  showEffects: true,
+  showConstraints: true
+};
+
+// Function to handle settings command
+async function handleSettingsCommand(): Promise<void> {
+  // Load saved settings
+  const savedSettings = await figma.clientStorage.getAsync('settings') || DEFAULT_SETTINGS;
+  
+  figma.showUI(__html__, { width: 300, height: 400 });
+  
+  // Send saved settings to UI
+  figma.ui.postMessage({ 
+    type: 'load-settings',
+    settings: savedSettings
+  });
+}
+
+// Handle messages from UI
+figma.ui.onmessage = async (msg) => {
+  if (msg.type === 'save-settings') {
+    // Save settings to client storage
+    await figma.clientStorage.setAsync('settings', msg.settings);
+  }
+};
+
+// Handle menu commands
+figma.on('run', ({ command }) => {
+  if (command === 'settings') {
+    handleSettingsCommand();
+  } else {
+    renameSelectedLayers();
+  }
+});
