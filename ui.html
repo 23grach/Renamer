@@ -90,6 +90,18 @@
       <input type="checkbox" id="showConstraints" checked>
       <label for="showConstraints">Show constraints</label>
     </div>
+    <div class="setting-item">
+      <input type="checkbox" id="useAutoLayoutNames" checked>
+      <label for="useAutoLayoutNames">Use Auto Layout names (V/H-Container)</label>
+    </div>
+    <div class="setting-item">
+      <input type="checkbox" id="useCornerRadius" checked>
+      <label for="useCornerRadius">Add corner radius info</label>
+    </div>
+    <div class="setting-item">
+      <input type="checkbox" id="useStrokeInfo" checked>
+      <label for="useStrokeInfo">Add stroke info (weight & color/style)</label>
+    </div>
   </div>
 
   <div class="footer">
@@ -105,7 +117,10 @@
         showColor: document.getElementById('showColor').checked,
         showOpacity: document.getElementById('showOpacity').checked,
         showEffects: document.getElementById('showEffects').checked,
-        showConstraints: document.getElementById('showConstraints').checked
+        showConstraints: document.getElementById('showConstraints').checked,
+        useAutoLayoutNames: document.getElementById('useAutoLayoutNames').checked,
+        useCornerRadius: document.getElementById('useCornerRadius').checked,
+        useStrokeInfo: document.getElementById('useStrokeInfo').checked
       };
     }
 
@@ -132,6 +147,9 @@
       document.getElementById('showOpacity').checked = settings.showOpacity;
       document.getElementById('showEffects').checked = settings.showEffects;
       document.getElementById('showConstraints').checked = settings.showConstraints;
+      document.getElementById('useAutoLayoutNames').checked = settings.useAutoLayoutNames !== undefined ? settings.useAutoLayoutNames : true;
+      document.getElementById('useCornerRadius').checked = settings.useCornerRadius !== undefined ? settings.useCornerRadius : true;
+      document.getElementById('useStrokeInfo').checked = settings.useStrokeInfo !== undefined ? settings.useStrokeInfo : true;
     }
 
     // Save settings when window is about to close
