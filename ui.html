@@ -8,7 +8,7 @@
       color: #333;
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
+      height: 100vh;
       margin: 0;
       overflow: hidden;
     }
@@ -25,14 +25,26 @@
       margin-bottom: 12px;
     }
     
+    h3 {
+      margin-top: 24px;
+      margin-bottom: 16px;
+      color: #1E1E1E;
+      font-size: 14px;
+    }
+    
+    h3:first-child {
+      margin-top: 0;
+    }
+    
     .setting-item label {
       margin-left: 8px;
       flex: 1;
+      font-size: 12px;
     }
     
     .footer {
-      padding-top: 20px;
-      padding-bottom: 20px;
+      padding-top: 16px;
+      padding-bottom: 16px;
       border-top: 1px solid #E5E5E5;
       text-align: center;
       font-size: 12px;
@@ -90,10 +102,22 @@
       <input type="checkbox" id="showConstraints" checked>
       <label for="showConstraints">Show constraints</label>
     </div>
+    
+    <h3>Auto Layout Settings</h3>
     <div class="setting-item">
       <input type="checkbox" id="useAutoLayoutNames" checked>
       <label for="useAutoLayoutNames">Use Auto Layout names (V/H-Container)</label>
     </div>
+    <div class="setting-item">
+      <input type="checkbox" id="useSizeInName" checked>
+      <label for="useSizeInName">Show Auto Layout size (320x64)</label>
+    </div>
+    <div class="setting-item">
+      <input type="checkbox" id="useItemCount" checked>
+      <label for="useItemCount">Show number of items (4 items)</label>
+    </div>
+    
+    <h3>Additional Properties</h3>
     <div class="setting-item">
       <input type="checkbox" id="useCornerRadius" checked>
       <label for="useCornerRadius">Add corner radius info</label>
@@ -120,7 +144,10 @@
         showConstraints: document.getElementById('showConstraints').checked,
         useAutoLayoutNames: document.getElementById('useAutoLayoutNames').checked,
         useCornerRadius: document.getElementById('useCornerRadius').checked,
-        useStrokeInfo: document.getElementById('useStrokeInfo').checked
+        useStrokeInfo: document.getElementById('useStrokeInfo').checked,
+        useSizeInName: document.getElementById('useSizeInName').checked,
+        useItemCount: document.getElementById('useItemCount').checked,
+        showLayoutInfo: true // Keep this for backward compatibility
       };
     }
 
@@ -150,6 +177,8 @@
       document.getElementById('useAutoLayoutNames').checked = settings.useAutoLayoutNames !== undefined ? settings.useAutoLayoutNames : true;
       document.getElementById('useCornerRadius').checked = settings.useCornerRadius !== undefined ? settings.useCornerRadius : true;
       document.getElementById('useStrokeInfo').checked = settings.useStrokeInfo !== undefined ? settings.useStrokeInfo : true;
+      document.getElementById('useSizeInName').checked = settings.useSizeInName !== undefined ? settings.useSizeInName : true;
+      document.getElementById('useItemCount').checked = settings.useItemCount !== undefined ? settings.useItemCount : true;
     }
 
     // Save settings when window is about to close

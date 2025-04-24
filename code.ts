@@ -44,15 +44,17 @@ function isContainerType(type: string): type is ContainerType {
 const DEFAULT_SETTINGS = {
   showDimensions: true,
   showColor: true,
-  // TODO: Implement logic for these settings if needed in the future
-  showOpacity: true, 
+  showOpacity: true,
   showEffects: true,
   showConstraints: true,
   useAutoLayoutNames: true,
   useCornerRadius: true,
   useStrokeInfo: true,
-  showLayoutInfo: true
-};
+  showLayoutInfo: true,
+  // New Auto Layout specific settings
+  useSizeInName: true,      // Show size for Auto Layout containers
+  useItemCount: true,       // Show number of items in Auto Layout containers
+} as const;
 
 // Type for settings
 type PluginSettings = typeof DEFAULT_SETTINGS;
@@ -314,15 +316,21 @@ function generateName(node: SceneNode, settings: PluginSettings): string {
 
         // Auto Layout Name takes priority if enabled
         if (settings.useAutoLayoutNames && 'layoutMode' in containerNode && containerNode.layoutMode !== 'NONE') {
+            // Base name based on layout direction
             baseName = containerNode.layoutMode === 'VERTICAL' ? 'V-Container' : 'H-Container';
-            // Future: Add Hug/Fill info based on settings:
-            // if (settings.showLayoutInfo) {
-            //   const horizSizing = containerNode.primaryAxisSizingMode; // Or counterAxisSizingMode
-            //   const vertSizing = containerNode.layoutMode === 'VERTICAL' ? containerNode.counterAxisSizingMode : containerNode.primaryAxisSizingMode;
-            //   if (horizSizing === 'AUTO' && vertSizing === 'AUTO') baseName += ' (Hug)';
-            //   else if (horizSizing === 'FIXED' && vertSizing === 'FIXED') baseName += ' (Fixed)'; // Less common to add
-            //   // Add more combinations as needed
-            // }
+            
+            // Add size information if enabled
+            if (settings.useSizeInName) {
+                const width = Math.round(containerNode.width);
+                const height = Math.round(containerNode.height);
+                nameParts.push(`${width}x${height}`);
+            }
+            
+            // Add item count if enabled
+            if (settings.useItemCount && containerNode.children) {
+                const itemCount = containerNode.children.length;
+                nameParts.push(`${itemCount} ${itemCount === 1 ? 'item' : 'items'}`);
+            }
         } else {
            // Default Container Logic (Header or Count)
            if (containerNode.children.length > 0) {
@@ -471,10 +479,6 @@ async function renameSelectedLayers(): Promise<void> {
         // This could be because only components were selected, or names didn't change based on settings
         figma.notify('No selected layers required renaming with the current settings.');
      }
-
-     // Decide whether to close the plugin. Usually close after 'run', but maybe not if launched from settings?
-     // Consider the context if possible, or add an explicit close button to the UI.
-     // figma.closePlugin();
      figma.closePlugin(); // Explicitly close after run command finishes
 
   } catch (e) {
@@ -497,7 +501,7 @@ async function handleSettingsCommand(): Promise<void> {
   // Load saved settings
   const savedSettings = await figma.clientStorage.getAsync('settings') || DEFAULT_SETTINGS;
   
-  figma.showUI(__html__, { width: 300, height: 400 });
+  figma.showUI(__html__, { width: 300, height: 580 });
   
   // Send saved settings to UI
   figma.ui.postMessage({ 
