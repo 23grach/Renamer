@@ -2,152 +2,277 @@
 <html>
 <head>
   <style>
-    body {
-      font-family: Inter, sans-serif;
-      padding: 20px;
-      color: #333;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      margin: 0;
-      overflow: hidden;
-    }
-    
-    .settings-section {
-      margin-bottom: 20px;
-      overflow-y: auto;
-      flex: 1;
-    }
-    
-    .setting-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    
-    h3 {
-      margin-top: 24px;
-      margin-bottom: 16px;
-      color: #1E1E1E;
-      font-size: 14px;
-    }
-    
-    h3:first-child {
-      margin-top: 0;
-    }
-    
-    .setting-item label {
-      margin-left: 8px;
-      flex: 1;
-      font-size: 12px;
-    }
-    
-    .footer {
-      padding-top: 16px;
-      padding-bottom: 16px;
-      border-top: 1px solid #E5E5E5;
-      text-align: center;
-      font-size: 12px;
-      color: #666;
-      background: white;
-      position: sticky;
-      bottom: 0;
-    }
-    
-    .footer a {
-      color: #18A0FB;
-      text-decoration: none;
-    }
-    
-    .footer a:hover {
-      text-decoration: underline;
-    }
-    
-    .version {
-      margin-top: 4px;
-      font-size: 10px;
-      color: #999;
-    }
-    
-    .version a {
-      color: #999;
-      text-decoration: none;
-    }
-    
-    .version a:hover {
-      text-decoration: underline;
-    }
+   body {
+  font-family: Inter, sans-serif;
+  padding: 16px 20px;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  margin: 0;
+  overflow: hidden;
+}
+
+.settings-section {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.layer-type-title {
+  font-size: 12px;
+  font-weight: 800;
+  margin: 0;
+  flex: 1;
+}
+
+.layer-type-title {
+  font-size: 12x;
+  font-weight: 600;
+  color: #1E1E1E;
+  margin: 0;
+  flex: 1;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 8px;
+}
+
+.setting-item input[type="checkbox"] {
+  flex-shrink: 0;
+  margin: 0;
+  width: 14px;
+  height: 14px;
+}
+
+.setting-item label {
+  font-size: 12px;
+  line-height: 1.4;
+  flex: 1;
+  margin: 0;
+}
+
+.section {
+  margin-bottom: 24px;
+}
+
+.footer {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  border-top: 1px solid #E5E5E5;
+  text-align: center;
+  font-size: 12px;
+  color: #666;
+  background: white;
+  position: sticky;
+  bottom: 0;
+}
+
+.footer a {
+  color: #18A0FB;
+  text-decoration: none;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+
+.version {
+  margin-top: 4px;
+  font-size: 10px;
+  color: #999;
+}
+
+.version a {
+  color: #999;
+  text-decoration: none;
+}
+
+.version a:hover {
+  text-decoration: underline;
+}
+
+.group-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.group-switch {
+  appearance: none;
+  width: 36px;
+  height: 20px;
+  background: #ccc;
+  border-radius: 999px;
+  position: relative;
+  outline: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.group-switch::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s ease;
+}
+
+.group-switch:checked {
+  background: #18A0FB;
+}
+
+.group-switch:checked::before {
+  transform: translateX(16px);
+}
+
+.group-disabled .setting-item {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.group-settings {
+}
+
   </style>
 </head>
 <body>
   <div class="settings-section">
-    <h3>Layer Properties</h3>
-    <div class="setting-item">
-      <input type="checkbox" id="showDimensions" checked>
-      <label for="showDimensions">Show dimensions (width × height)</label>
+    <!-- Text Layers -->
+    <div class="section" id="textLayerSection">
+      <div class="group-toggle">
+        <div class="layer-type-header">🅰️ Text Layers</div>
+        <input type="checkbox" class="group-switch" id="toggleTextGroup" checked>
+      </div>
+      <div class="group-settings">
+        <div class="setting-item">
+          <input type="checkbox" id="useTextContent" checked>
+          <label for="useTextContent">Use content as name</label>
+        </div>
+        <div class="setting-item">
+          <input type="checkbox" id="includeTextColor" checked>
+          <label for="includeTextColor">Include text color</label>
+        </div>
+        <div class="setting-item">
+          <input type="checkbox" id="includeTextStyle" checked>
+          <label for="includeTextStyle">Include text style name</label>
+        </div>
+        <div class="setting-item">
+          <input type="checkbox" id="includeTextOpacity" checked>
+          <label for="includeTextOpacity">Include opacity</label>
+        </div>
+      </div>
     </div>
-    <div class="setting-item">
-      <input type="checkbox" id="showColor" checked>
-      <label for="showColor">Show color</label>
+
+    <!-- Containers -->
+    <div class="section" id="containerLayerSection">
+      <div class="group-toggle">
+        <div class="layer-type-header">📦 Containers</div>
+        <input type="checkbox" class="group-switch" id="toggleContainerGroup" checked>
+      </div>
+      <div class="group-settings">
+        <div class="setting-item">
+          <input type="checkbox" id="includeContainerType" checked>
+          <label for="includeContainerType">Include container type</label>
+        </div>
+        <div class="setting-item">
+          <input type="checkbox" id="includeContainerSize" checked>
+          <label for="includeContainerSize">Include container size</label>
+        </div>
+        <div class="setting-item">
+          <input type="checkbox" id="includeChildrenCount" checked>
+          <label for="includeChildrenCount">Include number of children</label>
+        </div>
+        <div class="setting-item">
+          <input type="checkbox" id="includeContainerOpacity" checked>
+          <label for="includeContainerOpacity">Include opacity</label>
+        </div>
+        <div class="setting-item">
+          <input type="checkbox" id="useFirstTextContent" checked>
+          <label for="useFirstTextContent">Use first text layer content</label>
+        </div>
+        <div class="setting-item">
+          <input type="checkbox" id="useAutoLayoutNames" checked>
+          <label for="useAutoLayoutNames">Use Auto Layout names</label>
+        </div>
+      </div>
     </div>
-    <div class="setting-item">
-      <input type="checkbox" id="showOpacity" checked>
-      <label for="showOpacity">Show opacity</label>
-    </div>
-    <div class="setting-item">
-      <input type="checkbox" id="showEffects" checked>
-      <label for="showEffects">Show effects (shadows, blurs)</label>
-    </div>
-    <div class="setting-item">
-      <input type="checkbox" id="showConstraints" checked>
-      <label for="showConstraints">Show constraints</label>
-    </div>
-    
-    <h3>Auto Layout Settings</h3>
-    <div class="setting-item">
-      <input type="checkbox" id="useAutoLayoutNames" checked>
-      <label for="useAutoLayoutNames">Use Auto Layout names (V/H-Container)</label>
-    </div>
-    <div class="setting-item">
-      <input type="checkbox" id="useSizeInName" checked>
-      <label for="useSizeInName">Show Auto Layout size (320x64)</label>
-    </div>
-    <div class="setting-item">
-      <input type="checkbox" id="useItemCount" checked>
-      <label for="useItemCount">Show number of items (4 items)</label>
-    </div>
-    
-    <h3>Additional Properties</h3>
-    <div class="setting-item">
-      <input type="checkbox" id="useCornerRadius" checked>
-      <label for="useCornerRadius">Add corner radius info</label>
-    </div>
-    <div class="setting-item">
-      <input type="checkbox" id="useStrokeInfo" checked>
-      <label for="useStrokeInfo">Add stroke info (weight & color/style)</label>
+
+    <!-- Figures -->
+    <div class="section" id="figureLayerSection">
+      <div class="group-toggle">
+        <div class="layer-type-header">🧩 Figures</div>
+        <input type="checkbox" class="group-switch" id="toggleFigureGroup" checked>
+      </div>
+      <div class="group-settings">
+        <div class="setting-item">
+          <input type="checkbox" id="includeShapeType" checked>
+          <label for="includeShapeType">Include shape type</label>
+        </div>
+        <div class="setting-item">
+          <input type="checkbox" id="includeShapeSize" checked>
+          <label for="includeShapeSize">Include size</label>
+        </div>
+        <div class="setting-item">
+          <input type="checkbox" id="includeFillColor" checked>
+          <label for="includeFillColor">Include fill color</label>
+        </div>
+        <div class="setting-item">
+          <input type="checkbox" id="includeStrokeSettings" checked>
+          <label for="includeStrokeSettings">Include stroke settings</label>
+        </div>
+        <div class="setting-item">
+          <input type="checkbox" id="includeCornerRadius" checked>
+          <label for="includeCornerRadius">Include corner radius</label>
+        </div>
+        <div class="setting-item">
+          <input type="checkbox" id="includeFigureOpacity" checked>
+          <label for="includeFigureOpacity">Include opacity</label>
+        </div>
+      </div>
     </div>
   </div>
 
   <div class="footer">
     Made with ❤️ by <a href="https://gr-ch.ru" target="_blank">grach</a>
-    <div class="version"><a href="https://github.com/23grach/Renamer" target="_blank">v2.0.0</a></div>
+    <div class="version"><a href="https://github.com/23grach/Renamer" target="_blank">v4.0.0</a></div>
   </div>
 
   <script>
     // Function to get current settings
     function getCurrentSettings() {
       return {
-        showDimensions: document.getElementById('showDimensions').checked,
-        showColor: document.getElementById('showColor').checked,
-        showOpacity: document.getElementById('showOpacity').checked,
-        showEffects: document.getElementById('showEffects').checked,
-        showConstraints: document.getElementById('showConstraints').checked,
+        // Text Layers
+        enableTextLayers: document.getElementById('toggleTextGroup').checked,
+        useTextContent: document.getElementById('useTextContent').checked,
+        includeTextColor: document.getElementById('includeTextColor').checked,
+        includeTextStyle: document.getElementById('includeTextStyle').checked,
+        includeTextOpacity: document.getElementById('includeTextOpacity').checked,
+
+        // Containers
+        enableContainers: document.getElementById('toggleContainerGroup').checked,
+        includeContainerType: document.getElementById('includeContainerType').checked,
+        includeContainerSize: document.getElementById('includeContainerSize').checked,
+        includeChildrenCount: document.getElementById('includeChildrenCount').checked,
+        includeContainerOpacity: document.getElementById('includeContainerOpacity').checked,
+        useFirstTextContent: document.getElementById('useFirstTextContent').checked,
         useAutoLayoutNames: document.getElementById('useAutoLayoutNames').checked,
-        useCornerRadius: document.getElementById('useCornerRadius').checked,
-        useStrokeInfo: document.getElementById('useStrokeInfo').checked,
-        useSizeInName: document.getElementById('useSizeInName').checked,
-        useItemCount: document.getElementById('useItemCount').checked,
-        showLayoutInfo: true // Keep this for backward compatibility
+
+        // Figures
+        enableFigures: document.getElementById('toggleFigureGroup').checked,
+        includeShapeType: document.getElementById('includeShapeType').checked,
+        includeShapeSize: document.getElementById('includeShapeSize').checked,
+        includeFillColor: document.getElementById('includeFillColor').checked,
+        includeStrokeSettings: document.getElementById('includeStrokeSettings').checked,
+        includeCornerRadius: document.getElementById('includeCornerRadius').checked,
+        includeFigureOpacity: document.getElementById('includeFigureOpacity').checked
       };
     }
 
@@ -162,6 +287,32 @@
       }, '*');
     }
 
+    // Function to toggle section enabled state
+    function toggleSection(sectionId, enabled) {
+      const section = document.getElementById(sectionId);
+      if (enabled) {
+        section.classList.remove('group-disabled');
+      } else {
+        section.classList.add('group-disabled');
+      }
+    }
+
+    // Add event listeners to group toggles
+    document.getElementById('toggleTextGroup').addEventListener('change', (e) => {
+      toggleSection('textLayerSection', e.target.checked);
+      saveSettings();
+    });
+
+    document.getElementById('toggleContainerGroup').addEventListener('change', (e) => {
+      toggleSection('containerLayerSection', e.target.checked);
+      saveSettings();
+    });
+
+    document.getElementById('toggleFigureGroup').addEventListener('change', (e) => {
+      toggleSection('figureLayerSection', e.target.checked);
+      saveSettings();
+    });
+
     // Add event listeners to all checkboxes
     document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
       checkbox.addEventListener('change', saveSettings);
@@ -169,16 +320,35 @@
 
     // Function to apply settings to UI
     function applySettings(settings) {
-      document.getElementById('showDimensions').checked = settings.showDimensions;
-      document.getElementById('showColor').checked = settings.showColor;
-      document.getElementById('showOpacity').checked = settings.showOpacity;
-      document.getElementById('showEffects').checked = settings.showEffects;
-      document.getElementById('showConstraints').checked = settings.showConstraints;
+      // Text Layers
+      document.getElementById('toggleTextGroup').checked = settings.enableTextLayers !== undefined ? settings.enableTextLayers : true;
+      document.getElementById('useTextContent').checked = settings.useTextContent !== undefined ? settings.useTextContent : true;
+      document.getElementById('includeTextColor').checked = settings.includeTextColor !== undefined ? settings.includeTextColor : true;
+      document.getElementById('includeTextStyle').checked = settings.includeTextStyle !== undefined ? settings.includeTextStyle : true;
+      document.getElementById('includeTextOpacity').checked = settings.includeTextOpacity !== undefined ? settings.includeTextOpacity : true;
+
+      // Containers
+      document.getElementById('toggleContainerGroup').checked = settings.enableContainers !== undefined ? settings.enableContainers : true;
+      document.getElementById('includeContainerType').checked = settings.includeContainerType !== undefined ? settings.includeContainerType : true;
+      document.getElementById('includeContainerSize').checked = settings.includeContainerSize !== undefined ? settings.includeContainerSize : true;
+      document.getElementById('includeChildrenCount').checked = settings.includeChildrenCount !== undefined ? settings.includeChildrenCount : true;
+      document.getElementById('includeContainerOpacity').checked = settings.includeContainerOpacity !== undefined ? settings.includeContainerOpacity : true;
+      document.getElementById('useFirstTextContent').checked = settings.useFirstTextContent !== undefined ? settings.useFirstTextContent : true;
       document.getElementById('useAutoLayoutNames').checked = settings.useAutoLayoutNames !== undefined ? settings.useAutoLayoutNames : true;
-      document.getElementById('useCornerRadius').checked = settings.useCornerRadius !== undefined ? settings.useCornerRadius : true;
-      document.getElementById('useStrokeInfo').checked = settings.useStrokeInfo !== undefined ? settings.useStrokeInfo : true;
-      document.getElementById('useSizeInName').checked = settings.useSizeInName !== undefined ? settings.useSizeInName : true;
-      document.getElementById('useItemCount').checked = settings.useItemCount !== undefined ? settings.useItemCount : true;
+
+      // Figures
+      document.getElementById('toggleFigureGroup').checked = settings.enableFigures !== undefined ? settings.enableFigures : true;
+      document.getElementById('includeShapeType').checked = settings.includeShapeType !== undefined ? settings.includeShapeType : true;
+      document.getElementById('includeShapeSize').checked = settings.includeShapeSize !== undefined ? settings.includeShapeSize : true;
+      document.getElementById('includeFillColor').checked = settings.includeFillColor !== undefined ? settings.includeFillColor : true;
+      document.getElementById('includeStrokeSettings').checked = settings.includeStrokeSettings !== undefined ? settings.includeStrokeSettings : true;
+      document.getElementById('includeCornerRadius').checked = settings.includeCornerRadius !== undefined ? settings.includeCornerRadius : true;
+      document.getElementById('includeFigureOpacity').checked = settings.includeFigureOpacity !== undefined ? settings.includeFigureOpacity : true;
+
+      // Update section states
+      toggleSection('textLayerSection', settings.enableTextLayers !== undefined ? settings.enableTextLayers : true);
+      toggleSection('containerLayerSection', settings.enableContainers !== undefined ? settings.enableContainers : true);
+      toggleSection('figureLayerSection', settings.enableFigures !== undefined ? settings.enableFigures : true);
     }
 
     // Save settings when window is about to close

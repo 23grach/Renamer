@@ -42,18 +42,30 @@ function isContainerType(type: string): type is ContainerType {
 // --- Settings ---
 // Default settings
 const DEFAULT_SETTINGS = {
-  showDimensions: true,
-  showColor: true,
-  showOpacity: true,
-  showEffects: true,
-  showConstraints: true,
+  // Text Layers
+  enableTextLayers: true,
+  useTextContent: true,
+  includeTextColor: true,
+  includeTextStyle: true,
+  includeTextOpacity: true,
+
+  // Containers
+  enableContainers: true,
+  includeContainerType: true,
+  includeContainerSize: true,
+  includeChildrenCount: true,
+  includeContainerOpacity: true,
+  useFirstTextContent: true,
   useAutoLayoutNames: true,
-  useCornerRadius: true,
-  useStrokeInfo: true,
-  showLayoutInfo: true,
-  // New Auto Layout specific settings
-  useSizeInName: true,      // Show size for Auto Layout containers
-  useItemCount: true,       // Show number of items in Auto Layout containers
+
+  // Figures
+  enableFigures: true,
+  includeShapeType: true,
+  includeShapeSize: true,
+  includeFillColor: true,
+  includeStrokeSettings: true,
+  includeCornerRadius: true,
+  includeFigureOpacity: true
 } as const;
 
 // Type for settings
@@ -259,7 +271,7 @@ function getStrokeInfo(node: SceneNode, settings: PluginSettings): string | null
   if (!visibleStroke || visibleStroke.type !== 'SOLID') return null; // Only handle solid strokes for now
 
   // Fallback to weight and color if enabled
-   if (settings.useStrokeInfo) {
+   if (settings.includeStrokeSettings) {
      const weight = node.strokeWeight; // Already confirmed it's a number > 0
      const colorHex = colorToHex(visibleStroke.color);
      // Format as "stroke: Weightpx #HEXCOLOR"
@@ -282,7 +294,7 @@ function getFillInfo(node: SceneNode, settings: PluginSettings): string | null {
 
    // Fallback to fill color if enabled (and no style or style check disabled)
    // Use the first visible solid fill for color info
-   if (settings.showColor) {
+   if (settings.includeFillColor) {
        const solidFill = visibleFills.find(f => f.type === 'SOLID');
        if (solidFill && solidFill.type === 'SOLID') { // Check type again for type safety
            const colorHex = colorToHex(solidFill.color);
@@ -293,8 +305,30 @@ function getFillInfo(node: SceneNode, settings: PluginSettings): string | null {
 }
 
 /**
+ * Finds the first text node within a container's children.
+ * @param nodes An array of SceneNodes to search within.
+ * @returns The character content of the first text node, or an empty string if no text nodes are found.
+ */
+function findFirstTextContent(nodes: readonly SceneNode[]): string {
+  const firstTextNode = nodes.find((node): node is TextNode => node.type === 'TEXT');
+  return firstTextNode ? firstTextNode.characters : '';
+}
+
+/**
+ * Gets the text style name if available
+ * @param node The text node to get style from
+ * @returns The style name or null if no style is applied
+ */
+function getTextStyleName(node: TextNode): string | null {
+  if (node.textStyleId && typeof node.textStyleId === 'string') {
+    const style = figma.getStyleById(node.textStyleId);
+    return style ? style.name : null;
+  }
+  return null;
+}
+
+/**
  * Generates a descriptive name for a SceneNode based on its type, content, and settings.
- * Incorporates Auto Layout, Styles, Corner Radius, and Stroke info.
  * @param node The SceneNode to generate a name for.
  * @param settings The plugin settings object.
  * @returns The generated name string.
@@ -302,92 +336,120 @@ function getFillInfo(node: SceneNode, settings: PluginSettings): string | null {
 function generateName(node: SceneNode, settings: PluginSettings): string {
   try {
     const nameParts: (string | null)[] = [];
-    let baseName: string = node.name; // Start with original name as fallback
 
-    // 1. Determine Base Name (Type, Auto Layout, Component, Text)
-    if (isComponent(node)) {
-        // Components are usually named intentionally, return original name
-        // Could add a setting to allow renaming components later
-        return node.name;
-    } else if (node.type === 'TEXT') {
-        baseName = getTextContent(node) || 'Text'; // Use content or fallback to 'Text'
-    } else if (isContainerType(node.type)) {
-        const containerNode = node as ContainerNode; // Cast after check
+    // Text Layers
+    if (node.type === 'TEXT' && settings.enableTextLayers) {
+      // Base name from content
+      if (settings.useTextContent) {
+        nameParts.push(node.characters || 'Text');
+      }
 
-        // Auto Layout Name takes priority if enabled
+      // Text color
+      if (settings.includeTextColor && Array.isArray(node.fills) && node.fills.length > 0) {
+        const firstFill = node.fills[0];
+        if (firstFill.type === 'SOLID') {
+          nameParts.push(colorToHex(firstFill.color));
+        }
+      }
+
+      // Text style
+      if (settings.includeTextStyle) {
+        const styleName = getTextStyleName(node);
+        if (styleName) nameParts.push(styleName);
+      }
+
+      // Opacity
+      if (settings.includeTextOpacity && node.opacity < 1) {
+        nameParts.push(`Opacity: ${Math.round(node.opacity * 100)}%`);
+      }
+    }
+    
+    // Containers (Frame, Group, Component, etc.)
+    else if (isContainerType(node.type) && settings.enableContainers) {
+      const containerNode = node as ContainerNode;
+      
+      // Container type
+      if (settings.includeContainerType) {
         if (settings.useAutoLayoutNames && 'layoutMode' in containerNode && containerNode.layoutMode !== 'NONE') {
-            // Base name based on layout direction
-            baseName = containerNode.layoutMode === 'VERTICAL' ? 'V-Container' : 'H-Container';
-            
-            // Add size information if enabled
-            if (settings.useSizeInName) {
-                const width = Math.round(containerNode.width);
-                const height = Math.round(containerNode.height);
-                nameParts.push(`${width}x${height}`);
-            }
-            
-            // Add item count if enabled
-            if (settings.useItemCount && containerNode.children) {
-                const itemCount = containerNode.children.length;
-                nameParts.push(`${itemCount} ${itemCount === 1 ? 'item' : 'items'}`);
-            }
+          nameParts.push(containerNode.layoutMode === 'VERTICAL' ? 'V-Container' : 'H-Container');
         } else {
-           // Default Container Logic (Header or Count)
-           if (containerNode.children.length > 0) {
-             const headerText = findHeaderText(containerNode.children) || findHeaderFromChild(containerNode);
-             // Use header directly if found, otherwise use count
-             baseName = headerText ? `Container - ${headerText}` : `Container - ${getElementsCountText(containerNode.children.length)}`;
-           } else {
-             baseName = 'Container - Empty';
-           }
+          nameParts.push(node.type === 'FRAME' ? 'Frame' : 'Group');
         }
-    } else if (isShapeType(node.type)) {
-        const shapeNode = node as ShapeNode; // Cast after check
-        baseName = getShapeName(shapeNode); // Get basic shape name (Rectangle, Ellipse etc.)
-        // Get dimensions from modified getShapeInfo
+      }
+
+      // Container size
+      if (settings.includeContainerSize) {
+        nameParts.push(`${Math.round(containerNode.width)}x${Math.round(containerNode.height)}`);
+      }
+
+      // First text content or children count
+      if (containerNode.children.length > 0) {
+        if (settings.useFirstTextContent) {
+          const firstTextContent = findFirstTextContent(containerNode.children);
+          if (firstTextContent) {
+            nameParts.push(firstTextContent);
+          } else if (settings.includeChildrenCount) {
+            nameParts.push(getElementsCountText(containerNode.children.length));
+          }
+        } else if (settings.includeChildrenCount) {
+          nameParts.push(getElementsCountText(containerNode.children.length));
+        }
+      }
+
+      // Opacity
+      if (settings.includeContainerOpacity && containerNode.opacity < 1) {
+        nameParts.push(`Opacity: ${Math.round(containerNode.opacity * 100)}%`);
+      }
+    }
+    
+    // Figures (Shapes)
+    else if (isShapeType(node.type) && settings.enableFigures) {
+      const shapeNode = node as ShapeNode;
+
+      // Shape type
+      if (settings.includeShapeType) {
+        nameParts.push(getShapeName(shapeNode));
+      }
+
+      // Size
+      if (settings.includeShapeSize) {
         const { dimensions } = getShapeInfo(shapeNode);
-        if (settings.showDimensions && dimensions) {
-            nameParts.push(dimensions); // Add dimensions if enabled
-        }
-    } else {
-         // Fallback for other types (SLICE, GROUP - if not handled as container, etc.)
-        baseName = node.type.charAt(0).toUpperCase() + node.type.slice(1).toLowerCase(); // e.g., "Slice"
+        if (dimensions) nameParts.push(dimensions);
+      }
+
+      // Fill color
+      if (settings.includeFillColor) {
+        const fillInfo = getFillInfo(shapeNode, settings);
+        if (fillInfo) nameParts.push(fillInfo);
+      }
+
+      // Stroke settings
+      if (settings.includeStrokeSettings) {
+        const strokeInfo = getStrokeInfo(shapeNode, settings);
+        if (strokeInfo) nameParts.push(strokeInfo);
+      }
+
+      // Corner radius
+      if (settings.includeCornerRadius) {
+        const radiusInfo = formatCornerRadius(shapeNode);
+        if (radiusInfo) nameParts.push(radiusInfo);
+      }
+
+      // Opacity
+      if (settings.includeFigureOpacity && shapeNode.opacity < 1) {
+        nameParts.push(`Opacity: ${Math.round(shapeNode.opacity * 100)}%`);
+      }
     }
 
-    // Add the determined base name as the first part
-    nameParts.unshift(baseName);
-
-    // 2. Add Style/Appearance Info (Fill, Stroke, Radius, Opacity) based on Settings
-
-    // Fill Style / Color (Prioritize Style)
-    // Place fill info right after base name for shapes/containers?
-    nameParts.push(getFillInfo(node, settings));
-
-    // Stroke Style / Info (Prioritize Style)
-    nameParts.push(getStrokeInfo(node, settings));
-
-    // Corner Radius
-    if (settings.useCornerRadius) {
-        nameParts.push(formatCornerRadius(node));
-    }
-
-    // Opacity
-    if (settings.showOpacity && 'opacity' in node && typeof node.opacity === 'number' && node.opacity < 1) {
-      // Make opacity format consistent, e.g., "opacity 50%"
-      nameParts.push(`opacity ${Math.round(node.opacity * 100)}%`);
-    }
-
-    // 3. Join valid parts
+    // Join all parts with separator
     const finalName = nameParts
-        .filter(part => part !== null && part !== '') // Remove null or empty strings
-        .join(' - '); // Join with the chosen separator
+      .filter(part => part !== null && part !== '')
+      .join(' - ');
 
-    // Return original name if generation results in empty string (shouldn't happen with baseName)
-    return finalName.trim() || node.name;
-
+    return finalName || node.name; // Fallback to original name if no parts
   } catch (e) {
     console.error(`Error generating name for node ${node.id} (${node.name}):`, e);
-    return node.name; // Return original name on error to prevent breaking rename chain
+    return node.name; // Return original name on error
   }
 }
 
@@ -501,7 +563,7 @@ async function handleSettingsCommand(): Promise<void> {
   // Load saved settings
   const savedSettings = await figma.clientStorage.getAsync('settings') || DEFAULT_SETTINGS;
   
-  figma.showUI(__html__, { width: 300, height: 580 });
+  figma.showUI(__html__, { width: 300, height: 640 });
   
   // Send saved settings to UI
   figma.ui.postMessage({ 
