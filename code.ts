@@ -314,26 +314,24 @@ function findFirstTextContent(nodes: readonly SceneNode[]): string {
   return firstTextNode ? firstTextNode.characters : '';
 }
 
-/**
- * Gets the text style name if available
- * @param node The text node to get style from
- * @returns The style name or null if no style is applied
- */
-function getTextStyleName(node: TextNode): string | null {
+// Асинхронная версия получения имени текстового стиля
+async function getTextStyleName(node: TextNode): Promise<string | null> {
   if (node.textStyleId && typeof node.textStyleId === 'string') {
-    const style = figma.getStyleById(node.textStyleId);
-    return style ? style.name : null;
+    try {
+      const style = await figma.getStyleByIdAsync(node.textStyleId);
+      console.log('getTextStyleName:', { nodeName: node.name, textStyleId: node.textStyleId, styleName: style ? style.name : null });
+      return style ? style.name : null;
+    } catch (e) {
+      console.error('getTextStyleName error:', e);
+      return null;
+    }
   }
+  console.log('getTextStyleName: no style', { nodeName: node.name });
   return null;
 }
 
-/**
- * Generates a descriptive name for a SceneNode based on its type, content, and settings.
- * @param node The SceneNode to generate a name for.
- * @param settings The plugin settings object.
- * @returns The generated name string.
- */
-function generateName(node: SceneNode, settings: PluginSettings): string {
+// Асинхронная генерация имени
+async function generateName(node: SceneNode, settings: PluginSettings): Promise<string> {
   try {
     const nameParts: (string | null)[] = [];
 
@@ -354,7 +352,7 @@ function generateName(node: SceneNode, settings: PluginSettings): string {
 
       // Text style
       if (settings.includeTextStyle) {
-        const styleName = getTextStyleName(node);
+        const styleName = await getTextStyleName(node);
         if (styleName) nameParts.push(styleName);
       }
 
@@ -363,11 +361,9 @@ function generateName(node: SceneNode, settings: PluginSettings): string {
         nameParts.push(`Opacity: ${Math.round(node.opacity * 100)}%`);
       }
     }
-    
     // Containers (Frame, Group, Component, etc.)
     else if (isContainerType(node.type) && settings.enableContainers) {
       const containerNode = node as ContainerNode;
-      
       // Container type
       if (settings.includeContainerType) {
         if (settings.useAutoLayoutNames && 'layoutMode' in containerNode && containerNode.layoutMode !== 'NONE') {
@@ -376,12 +372,10 @@ function generateName(node: SceneNode, settings: PluginSettings): string {
           nameParts.push(node.type === 'FRAME' ? 'Frame' : 'Group');
         }
       }
-
       // Container size
       if (settings.includeContainerSize) {
         nameParts.push(`${Math.round(containerNode.width)}x${Math.round(containerNode.height)}`);
       }
-
       // First text content or children count
       if (containerNode.children.length > 0) {
         if (settings.useFirstTextContent) {
@@ -395,57 +389,47 @@ function generateName(node: SceneNode, settings: PluginSettings): string {
           nameParts.push(getElementsCountText(containerNode.children.length));
         }
       }
-
       // Opacity
       if (settings.includeContainerOpacity && containerNode.opacity < 1) {
         nameParts.push(`Opacity: ${Math.round(containerNode.opacity * 100)}%`);
       }
     }
-    
     // Figures (Shapes)
     else if (isShapeType(node.type) && settings.enableFigures) {
       const shapeNode = node as ShapeNode;
-
       // Shape type
       if (settings.includeShapeType) {
         nameParts.push(getShapeName(shapeNode));
       }
-
       // Size
       if (settings.includeShapeSize) {
         const { dimensions } = getShapeInfo(shapeNode);
         if (dimensions) nameParts.push(dimensions);
       }
-
       // Fill color
       if (settings.includeFillColor) {
         const fillInfo = getFillInfo(shapeNode, settings);
         if (fillInfo) nameParts.push(fillInfo);
       }
-
       // Stroke settings
       if (settings.includeStrokeSettings) {
         const strokeInfo = getStrokeInfo(shapeNode, settings);
         if (strokeInfo) nameParts.push(strokeInfo);
       }
-
       // Corner radius
       if (settings.includeCornerRadius) {
         const radiusInfo = formatCornerRadius(shapeNode);
         if (radiusInfo) nameParts.push(radiusInfo);
       }
-
       // Opacity
       if (settings.includeFigureOpacity && shapeNode.opacity < 1) {
         nameParts.push(`Opacity: ${Math.round(shapeNode.opacity * 100)}%`);
       }
     }
-
     // Join all parts with separator
     const finalName = nameParts
       .filter(part => part !== null && part !== '')
       .join(' - ');
-
     return finalName || node.name; // Fallback to original name if no parts
   } catch (e) {
     console.error(`Error generating name for node ${node.id} (${node.name}):`, e);
@@ -453,23 +437,18 @@ function generateName(node: SceneNode, settings: PluginSettings): string {
   }
 }
 
-/**
- * Recursively renames a node and its children based on generated names.
- * Skips renaming components themselves but traverses into their children if they are containers.
- * @param node The starting SceneNode.
- * @param settings The plugin settings to use for name generation.
- */
-function renameNodeRecursively(node: SceneNode, settings: PluginSettings): void {
+// Асинхронная рекурсивная функция переименования
+async function renameNodeRecursively(node: SceneNode, settings: PluginSettings): Promise<void> {
   try {
     let shouldRecurse = false; // Flag to control recursion
-
     // Skip renaming components themselves
     if (isComponent(node)) {
         // Only recurse into components if they can have children (are containers)
         shouldRecurse = 'children' in node && isContainerType(node.type);
     } else {
         // Generate and assign name for non-components
-        const newName = generateName(node, settings);
+        const newName = await generateName(node, settings);
+        console.log('renameNodeRecursively:', { nodeId: node.id, nodeName: node.name, generatedName: newName });
         // Only assign if the name actually changed
         if (newName !== node.name) {
             node.name = newName;
@@ -477,12 +456,13 @@ function renameNodeRecursively(node: SceneNode, settings: PluginSettings): void 
         // Allow recursion for any node that can have children
         shouldRecurse = 'children' in node && isContainerType(node.type);
     }
-
     // Recurse into children if applicable and allowed
     if (shouldRecurse && 'children' in node) {
       // Ensure children exist and node is a valid container type before iterating
       if (Array.isArray(node.children)) {
-          (node.children as SceneNode[]).forEach(child => renameNodeRecursively(child, settings));
+          for (const child of node.children as SceneNode[]) {
+            await renameNodeRecursively(child, settings);
+          }
       }
     }
   } catch (e) {
@@ -492,11 +472,7 @@ function renameNodeRecursively(node: SceneNode, settings: PluginSettings): void 
   }
 }
 
-/**
- * Main function to rename all currently selected layers.
- * Loads settings and applies renaming recursively to each selected node.
- * Provides more accurate feedback on renamed layers.
- */
+// Асинхронная функция для переименования выбранных слоёв
 async function renameSelectedLayers(): Promise<void> {
   try {
     const selection = figma.currentPage.selection;
@@ -505,24 +481,19 @@ async function renameSelectedLayers(): Promise<void> {
       // Keep plugin open if settings might be displayed
       return;
     }
-
     // Load settings or use defaults
     // Ensure DEFAULT_SETTINGS includes the new boolean flags
     const settings = await figma.clientStorage.getAsync('settings') || DEFAULT_SETTINGS;
-
     let renamedCount = 0;
     const originalNames = new Map<string, string>(); // Store original names to check for changes
-
     // First pass: store original names
     selection.forEach(node => {
         originalNames.set(node.id, node.name);
     });
-
-    // Second pass: rename recursively
-    selection.forEach(node => {
-        renameNodeRecursively(node, settings);
-    });
-
+    // Second pass: rename recursively (await для каждого)
+    for (const node of selection) {
+      await renameNodeRecursively(node, settings);
+    }
     // Third pass: count actual changes on top-level selected items (excluding components)
     selection.forEach(node => {
         const originalName = originalNames.get(node.id);
@@ -531,7 +502,6 @@ async function renameSelectedLayers(): Promise<void> {
              renamedCount++;
         }
     });
-
      // Notify based on the count
      if (renamedCount > 0) {
         const layerText = getLayerText(renamedCount); // Assumes getLayerText handles pluralization
@@ -542,7 +512,6 @@ async function renameSelectedLayers(): Promise<void> {
         figma.notify('No selected layers required renaming with the current settings.');
      }
      figma.closePlugin(); // Explicitly close after run command finishes
-
   } catch (e) {
     console.error("Error during layer renaming process:", e);
     figma.notify(
