@@ -2,267 +2,292 @@
 <html>
 <head>
   <style>
-   body {
-  font-family: Inter, sans-serif;
-  padding: 16px 20px;
-  color: #333;
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  margin: 0;
-  overflow: hidden;
-}
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-.settings-section {
-  overflow-y: auto;
-  flex: 1;
-}
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+      background: #F8F9FA;
+      color: #1A1A1A;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
+    .header {
+      background: white;
+      border-bottom: 1px solid #E9ECEF;
+      padding: 16px 16px 12px 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
 
+    .header-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1A1A1A;
+      margin-bottom: 4px;
+    }
 
-.setting-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-  gap: 8px;
-}
+    .header-subtitle {
+      font-size: 12px;
+      color: #6C757D;
+    }
 
-.setting-item input[type="checkbox"] {
-  flex-shrink: 0;
-  margin: 0;
-  width: 14px;
-  height: 14px;
-}
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      background: white;
+    }
 
-.setting-item label {
-  font-size: 12px;
-  line-height: 1.4;
-  flex: 1;
-  margin: 0;
-}
+    .group-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 0 8px 0;
+      margin-top: 16px;
+      border-bottom: 1px solid #F1F3F4;
+      gap: 12px;
+    }
 
-.section {
-  margin-bottom: 24px;
-}
+    .group-item:first-child {
+      margin-top: 0;
+    }
 
-.footer {
-  padding-top: 12px;
-  padding-bottom: 12px;
-  border-top: 1px solid #E5E5E5;
-  text-align: center;
-  font-size: 12px;
-  color: #666;
-  background: white;
-  position: sticky;
-  bottom: 0;
-}
+    .group-checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: #007AFF;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
 
-.footer a {
-  color: #18A0FB;
-  text-decoration: none;
-}
+    .group-icon {
+      font-size: 16px;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
 
-.footer a:hover {
-  text-decoration: underline;
-}
+    .group-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1A1A1A;
+      flex: 1;
+      cursor: pointer;
+    }
 
-.version {
-  margin-top: 4px;
-  font-size: 10px;
-  color: #999;
-}
+    .option-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 0;
+      gap: 12px;
+    }
 
-.version a {
-  color: #999;
-  text-decoration: none;
-}
+    .option-item.disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
 
-.version a:hover {
-  text-decoration: underline;
-}
+    .option-checkbox {
+      width: 16px;
+      height: 16px;
+      accent-color: #007AFF;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
 
-.group-toggle {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-  gap: 8px;
-}
+    .option-label {
+      font-size: 13px;
+      color: #1A1A1A;
+      flex: 1;
+      cursor: pointer;
+    }
 
-.group-checkbox {
-  flex-shrink: 0;
-  margin: 0;
-  width: 14px;
-  height: 14px;
-}
+    .action-footer {
+      background: white;
+      border-top: 1px solid #E9ECEF;
+      padding: 16px;
+    }
 
-.layer-type-header {
-  font-size: 12px;
-  font-weight: 600;
-  color: #1E1E1E;
-  margin: 0;
-  flex: 1;
-}
+    .action-button {
+      width: 100%;
+      padding: 12px 16px;
+      background: #007AFF;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+    }
 
-.group-disabled .setting-item {
-  opacity: 0.5;
-  pointer-events: none;
-}
+    .action-button:hover {
+      background: #0056CC;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+    }
 
-.group-settings {
-  margin-left: 22px;
-}
+    .action-button:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+    }
 
-.action-buttons {
-  padding: 16px 20px;
-  border-top: 1px solid #E5E5E5;
-  background: white;
-}
+    /* Scrollbar styling */
+    .content::-webkit-scrollbar {
+      width: 6px;
+    }
 
-.rename-button {
-  width: 100%;
-  padding: 12px;
-  background: #18A0FB;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
+    .content::-webkit-scrollbar-track {
+      background: transparent;
+    }
 
-.rename-button:hover {
-  background: #1592E6;
-}
+    .content::-webkit-scrollbar-thumb {
+      background: #CED4DA;
+      border-radius: 3px;
+    }
 
-.rename-button:active {
-  background: #0F7BCF;
-}
-
+    .content::-webkit-scrollbar-thumb:hover {
+      background: #ADB5BD;
+    }
   </style>
 </head>
 <body>
-  <div class="settings-section">
-    <!-- Text Layers -->
-    <div class="section" id="textLayerSection">
-      <div class="group-toggle">
-        <input type="checkbox" class="group-checkbox" id="toggleTextGroup" checked>
-        <label for="toggleTextGroup" class="layer-type-header">🅰️ Text Layers</label>
-      </div>
-      <div class="group-settings">
-        <div class="setting-item">
-          <input type="checkbox" id="useTextContent" checked>
-          <label for="useTextContent">Use content as name</label>
-        </div>
-        <div class="setting-item">
-          <input type="checkbox" id="includeTextColor" checked>
-          <label for="includeTextColor">Include text color</label>
-        </div>
-        <div class="setting-item">
-          <input type="checkbox" id="includeTextStyle" checked>
-          <label for="includeTextStyle">Include text style name</label>
-        </div>
-        <div class="setting-item">
-          <input type="checkbox" id="includeTextOpacity" checked>
-          <label for="includeTextOpacity">Include opacity</label>
-        </div>
-      </div>
+  <div class="header">
+    <div class="header-title">Layer Renamer</div>
+    <div class="header-subtitle">Automatically rename layers based on their properties</div>
+  </div>
+
+  <div class="content">
+    <!-- Text Layers Group -->
+    <div class="group-item">
+      <input type="checkbox" class="group-checkbox" id="textToggle" checked>
+      <div class="group-icon">🅰️</div>
+      <label for="textToggle" class="group-title">Text Layers</label>
+    </div>
+    
+    <div class="option-item" data-group="text">
+      <input type="checkbox" class="option-checkbox" id="useTextContent" checked>
+      <label for="useTextContent" class="option-label">Use content as name</label>
+    </div>
+    
+    <div class="option-item" data-group="text">
+      <input type="checkbox" class="option-checkbox" id="includeTextColor" checked>
+      <label for="includeTextColor" class="option-label">Include text color</label>
+    </div>
+    
+    <div class="option-item" data-group="text">
+      <input type="checkbox" class="option-checkbox" id="includeTextStyle" checked>
+      <label for="includeTextStyle" class="option-label">Include text style name</label>
+    </div>
+    
+    <div class="option-item" data-group="text">
+      <input type="checkbox" class="option-checkbox" id="includeTextOpacity" checked>
+      <label for="includeTextOpacity" class="option-label">Include opacity</label>
     </div>
 
-    <!-- Containers -->
-    <div class="section" id="containerLayerSection">
-      <div class="group-toggle">
-        <input type="checkbox" class="group-checkbox" id="toggleContainerGroup" checked>
-        <label for="toggleContainerGroup" class="layer-type-header">📦 Containers</label>
-      </div>
-      <div class="group-settings">
-        <div class="setting-item">
-          <input type="checkbox" id="includeContainerType" checked>
-          <label for="includeContainerType">Include container type</label>
-        </div>
-        <div class="setting-item">
-          <input type="checkbox" id="includeContainerSize" checked>
-          <label for="includeContainerSize">Include container size</label>
-        </div>
-        <div class="setting-item">
-          <input type="checkbox" id="includeChildrenCount" checked>
-          <label for="includeChildrenCount">Include number of children</label>
-        </div>
-        <div class="setting-item">
-          <input type="checkbox" id="includeContainerOpacity" checked>
-          <label for="includeContainerOpacity">Include opacity</label>
-        </div>
-        <div class="setting-item">
-          <input type="checkbox" id="useFirstTextContent" checked>
-          <label for="useFirstTextContent">Use first text layer content</label>
-        </div>
-        <div class="setting-item">
-          <input type="checkbox" id="useAutoLayoutNames" checked>
-          <label for="useAutoLayoutNames">Use Auto Layout names</label>
-        </div>
-      </div>
+    <!-- Containers Group -->
+    <div class="group-item">
+      <input type="checkbox" class="group-checkbox" id="containerToggle" checked>
+      <div class="group-icon">📦</div>
+      <label for="containerToggle" class="group-title">Containers</label>
+    </div>
+    
+    <div class="option-item" data-group="container">
+      <input type="checkbox" class="option-checkbox" id="includeContainerType" checked>
+      <label for="includeContainerType" class="option-label">Include container type</label>
+    </div>
+    
+    <div class="option-item" data-group="container">
+      <input type="checkbox" class="option-checkbox" id="includeContainerSize" checked>
+      <label for="includeContainerSize" class="option-label">Include container size</label>
+    </div>
+    
+    <div class="option-item" data-group="container">
+      <input type="checkbox" class="option-checkbox" id="includeChildrenCount" checked>
+      <label for="includeChildrenCount" class="option-label">Include number of children</label>
+    </div>
+    
+    <div class="option-item" data-group="container">
+      <input type="checkbox" class="option-checkbox" id="includeContainerOpacity" checked>
+      <label for="includeContainerOpacity" class="option-label">Include opacity</label>
+    </div>
+    
+    <div class="option-item" data-group="container">
+      <input type="checkbox" class="option-checkbox" id="useFirstTextContent" checked>
+      <label for="useFirstTextContent" class="option-label">Use first text layer content</label>
+    </div>
+    
+    <div class="option-item" data-group="container">
+      <input type="checkbox" class="option-checkbox" id="useAutoLayoutNames" checked>
+      <label for="useAutoLayoutNames" class="option-label">Use Auto Layout names</label>
     </div>
 
-    <!-- Figures -->
-    <div class="section" id="figureLayerSection">
-      <div class="group-toggle">
-        <input type="checkbox" class="group-checkbox" id="toggleFigureGroup" checked>
-        <label for="toggleFigureGroup" class="layer-type-header">🧩 Figures</label>
-      </div>
-      <div class="group-settings">
-        <div class="setting-item">
-          <input type="checkbox" id="includeShapeType" checked>
-          <label for="includeShapeType">Include shape type</label>
-        </div>
-        <div class="setting-item">
-          <input type="checkbox" id="includeShapeSize" checked>
-          <label for="includeShapeSize">Include size</label>
-        </div>
-        <div class="setting-item">
-          <input type="checkbox" id="includeFillColor" checked>
-          <label for="includeFillColor">Include fill color</label>
-        </div>
-        <div class="setting-item">
-          <input type="checkbox" id="includeStrokeSettings" checked>
-          <label for="includeStrokeSettings">Include stroke settings</label>
-        </div>
-        <div class="setting-item">
-          <input type="checkbox" id="includeCornerRadius" checked>
-          <label for="includeCornerRadius">Include corner radius</label>
-        </div>
-        <div class="setting-item">
-          <input type="checkbox" id="includeFigureOpacity" checked>
-          <label for="includeFigureOpacity">Include opacity</label>
-        </div>
-      </div>
+    <!-- Figures Group -->
+    <div class="group-item">
+      <input type="checkbox" class="group-checkbox" id="figureToggle" checked>
+      <div class="group-icon">🧩</div>
+      <label for="figureToggle" class="group-title">Figures</label>
+    </div>
+    
+    <div class="option-item" data-group="figure">
+      <input type="checkbox" class="option-checkbox" id="includeShapeType" checked>
+      <label for="includeShapeType" class="option-label">Include shape type</label>
+    </div>
+    
+    <div class="option-item" data-group="figure">
+      <input type="checkbox" class="option-checkbox" id="includeShapeSize" checked>
+      <label for="includeShapeSize" class="option-label">Include size</label>
+    </div>
+    
+    <div class="option-item" data-group="figure">
+      <input type="checkbox" class="option-checkbox" id="includeFillColor" checked>
+      <label for="includeFillColor" class="option-label">Include fill color</label>
+    </div>
+    
+    <div class="option-item" data-group="figure">
+      <input type="checkbox" class="option-checkbox" id="includeStrokeSettings" checked>
+      <label for="includeStrokeSettings" class="option-label">Include stroke settings</label>
+    </div>
+    
+    <div class="option-item" data-group="figure">
+      <input type="checkbox" class="option-checkbox" id="includeCornerRadius" checked>
+      <label for="includeCornerRadius" class="option-label">Include corner radius</label>
+    </div>
+    
+    <div class="option-item" data-group="figure">
+      <input type="checkbox" class="option-checkbox" id="includeFigureOpacity" checked>
+      <label for="includeFigureOpacity" class="option-label">Include opacity</label>
     </div>
   </div>
 
-  <div class="action-buttons">
-    <button id="renameButton" class="rename-button">Rename Selected Layers</button>
-  </div>
-
-  <div class="footer">
-    Made with ❤️ by <a href="https://gr-ch.ru" target="_blank">grach</a>
-    <div class="version"><a href="https://github.com/23grach/Renamer" target="_blank">v5.0.0</a></div>
+  <div class="action-footer">
+    <button class="action-button" id="renameButton">Rename Selected Layers</button>
   </div>
 
   <script>
-    // Хранилище для предыдущих состояний чекбоксов
-    const previousStates = {};
-
     // Function to get current settings
     function getCurrentSettings() {
       return {
         // Text Layers
-        enableTextLayers: document.getElementById('toggleTextGroup').checked,
+        enableTextLayers: document.getElementById('textToggle').checked,
         useTextContent: document.getElementById('useTextContent').checked,
         includeTextColor: document.getElementById('includeTextColor').checked,
         includeTextStyle: document.getElementById('includeTextStyle').checked,
         includeTextOpacity: document.getElementById('includeTextOpacity').checked,
 
         // Containers
-        enableContainers: document.getElementById('toggleContainerGroup').checked,
+        enableContainers: document.getElementById('containerToggle').checked,
         includeContainerType: document.getElementById('includeContainerType').checked,
         includeContainerSize: document.getElementById('includeContainerSize').checked,
         includeChildrenCount: document.getElementById('includeChildrenCount').checked,
@@ -271,7 +296,7 @@
         useAutoLayoutNames: document.getElementById('useAutoLayoutNames').checked,
 
         // Figures
-        enableFigures: document.getElementById('toggleFigureGroup').checked,
+        enableFigures: document.getElementById('figureToggle').checked,
         includeShapeType: document.getElementById('includeShapeType').checked,
         includeShapeSize: document.getElementById('includeShapeSize').checked,
         includeFillColor: document.getElementById('includeFillColor').checked,
@@ -281,65 +306,111 @@
       };
     }
 
-    // Function to save settings
+    // Save settings to plugin
     function saveSettings() {
       const settings = getCurrentSettings();
       parent.postMessage({ 
         pluginMessage: { 
           type: 'save-settings',
-          settings,
-          previousStates
+          settings
         }
       }, '*');
     }
 
-    // Function to toggle section enabled state
-    function toggleSection(sectionId, enabled, shouldSave = true) {
-      const section = document.getElementById(sectionId);
-      const checkboxes = section.querySelectorAll('.group-settings input[type="checkbox"]');
+    // Toggle group functionality
+    function toggleGroup(groupName) {
+      const groupToggle = document.getElementById(`${groupName}Toggle`);
+      const groupItems = document.querySelectorAll(`[data-group="${groupName}"]`);
       
-      if (enabled) {
-        // Включить группу: включить все чекбоксы внутри
-        section.classList.remove('group-disabled');
-        checkboxes.forEach(checkbox => {
+      if (groupToggle.checked) {
+        // Enable group - enable all items and their checkboxes
+        groupItems.forEach(item => {
+          item.classList.remove('disabled');
+          const checkbox = item.querySelector('.option-checkbox');
           checkbox.checked = true;
         });
       } else {
-        // Выключить группу: выключить все чекбоксы внутри
-        checkboxes.forEach(checkbox => {
+        // Disable group - disable all items and their checkboxes
+        groupItems.forEach(item => {
+          item.classList.add('disabled');
+          const checkbox = item.querySelector('.option-checkbox');
           checkbox.checked = false;
         });
-        section.classList.add('group-disabled');
       }
       
-      // Сохраняем настройки после изменения состояния чекбоксов
-      if (shouldSave) {
-        saveSettings();
-      }
+      saveSettings();
+    }
+
+    // Apply settings to UI
+    function applySettings(loadedSettings) {
+      // Text Layers
+      document.getElementById('textToggle').checked = loadedSettings.enableTextLayers !== undefined ? loadedSettings.enableTextLayers : true;
+      document.getElementById('useTextContent').checked = loadedSettings.useTextContent !== undefined ? loadedSettings.useTextContent : true;
+      document.getElementById('includeTextColor').checked = loadedSettings.includeTextColor !== undefined ? loadedSettings.includeTextColor : true;
+      document.getElementById('includeTextStyle').checked = loadedSettings.includeTextStyle !== undefined ? loadedSettings.includeTextStyle : true;
+      document.getElementById('includeTextOpacity').checked = loadedSettings.includeTextOpacity !== undefined ? loadedSettings.includeTextOpacity : true;
+
+      // Containers
+      document.getElementById('containerToggle').checked = loadedSettings.enableContainers !== undefined ? loadedSettings.enableContainers : true;
+      document.getElementById('includeContainerType').checked = loadedSettings.includeContainerType !== undefined ? loadedSettings.includeContainerType : true;
+      document.getElementById('includeContainerSize').checked = loadedSettings.includeContainerSize !== undefined ? loadedSettings.includeContainerSize : true;
+      document.getElementById('includeChildrenCount').checked = loadedSettings.includeChildrenCount !== undefined ? loadedSettings.includeChildrenCount : true;
+      document.getElementById('includeContainerOpacity').checked = loadedSettings.includeContainerOpacity !== undefined ? loadedSettings.includeContainerOpacity : true;
+      document.getElementById('useFirstTextContent').checked = loadedSettings.useFirstTextContent !== undefined ? loadedSettings.useFirstTextContent : true;
+      document.getElementById('useAutoLayoutNames').checked = loadedSettings.useAutoLayoutNames !== undefined ? loadedSettings.useAutoLayoutNames : true;
+
+      // Figures
+      document.getElementById('figureToggle').checked = loadedSettings.enableFigures !== undefined ? loadedSettings.enableFigures : true;
+      document.getElementById('includeShapeType').checked = loadedSettings.includeShapeType !== undefined ? loadedSettings.includeShapeType : true;
+      document.getElementById('includeShapeSize').checked = loadedSettings.includeShapeSize !== undefined ? loadedSettings.includeShapeSize : true;
+      document.getElementById('includeFillColor').checked = loadedSettings.includeFillColor !== undefined ? loadedSettings.includeFillColor : true;
+      document.getElementById('includeStrokeSettings').checked = loadedSettings.includeStrokeSettings !== undefined ? loadedSettings.includeStrokeSettings : true;
+      document.getElementById('includeCornerRadius').checked = loadedSettings.includeCornerRadius !== undefined ? loadedSettings.includeCornerRadius : true;
+      document.getElementById('includeFigureOpacity').checked = loadedSettings.includeFigureOpacity !== undefined ? loadedSettings.includeFigureOpacity : true;
+
+      // Update group states
+      updateGroupStates();
+    }
+
+    // Update group states based on checkboxes
+    function updateGroupStates() {
+      ['text', 'container', 'figure'].forEach(groupName => {
+        const groupToggle = document.getElementById(`${groupName}Toggle`);
+        const groupItems = document.querySelectorAll(`[data-group="${groupName}"]`);
+        
+        if (groupToggle.checked) {
+          groupItems.forEach(item => {
+            item.classList.remove('disabled');
+          });
+        } else {
+          groupItems.forEach(item => {
+            item.classList.add('disabled');
+          });
+        }
+      });
     }
 
     // Add event listeners to group toggles
-    document.getElementById('toggleTextGroup').addEventListener('change', (e) => {
-      toggleSection('textLayerSection', e.target.checked);
+    document.getElementById('textToggle').addEventListener('change', () => {
+      toggleGroup('text');
     });
 
-    document.getElementById('toggleContainerGroup').addEventListener('change', (e) => {
-      toggleSection('containerLayerSection', e.target.checked);
+    document.getElementById('containerToggle').addEventListener('change', () => {
+      toggleGroup('container');
     });
 
-    document.getElementById('toggleFigureGroup').addEventListener('change', (e) => {
-      toggleSection('figureLayerSection', e.target.checked);
+    document.getElementById('figureToggle').addEventListener('change', () => {
+      toggleGroup('figure');
     });
 
-    // Add event listeners to all checkboxes
-    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+    // Add event listeners to all option checkboxes
+    document.querySelectorAll('.option-checkbox').forEach(checkbox => {
       checkbox.addEventListener('change', saveSettings);
     });
 
-    // Add event listener to rename button
+    // Rename button functionality
     document.getElementById('renameButton').addEventListener('click', () => {
       const settings = getCurrentSettings();
-      console.log('Sending rename request with settings:', settings);
       parent.postMessage({ 
         pluginMessage: { 
           type: 'rename-with-settings',
@@ -348,53 +419,17 @@
       }, '*');
     });
 
-    // Function to apply settings to UI
-    function applySettings(settings) {
-      // Text Layers
-      document.getElementById('toggleTextGroup').checked = settings.enableTextLayers !== undefined ? settings.enableTextLayers : true;
-      document.getElementById('useTextContent').checked = settings.useTextContent !== undefined ? settings.useTextContent : true;
-      document.getElementById('includeTextColor').checked = settings.includeTextColor !== undefined ? settings.includeTextColor : true;
-      document.getElementById('includeTextStyle').checked = settings.includeTextStyle !== undefined ? settings.includeTextStyle : true;
-      document.getElementById('includeTextOpacity').checked = settings.includeTextOpacity !== undefined ? settings.includeTextOpacity : true;
-
-      // Containers
-      document.getElementById('toggleContainerGroup').checked = settings.enableContainers !== undefined ? settings.enableContainers : true;
-      document.getElementById('includeContainerType').checked = settings.includeContainerType !== undefined ? settings.includeContainerType : true;
-      document.getElementById('includeContainerSize').checked = settings.includeContainerSize !== undefined ? settings.includeContainerSize : true;
-      document.getElementById('includeChildrenCount').checked = settings.includeChildrenCount !== undefined ? settings.includeChildrenCount : true;
-      document.getElementById('includeContainerOpacity').checked = settings.includeContainerOpacity !== undefined ? settings.includeContainerOpacity : true;
-      document.getElementById('useFirstTextContent').checked = settings.useFirstTextContent !== undefined ? settings.useFirstTextContent : true;
-      document.getElementById('useAutoLayoutNames').checked = settings.useAutoLayoutNames !== undefined ? settings.useAutoLayoutNames : true;
-
-      // Figures
-      document.getElementById('toggleFigureGroup').checked = settings.enableFigures !== undefined ? settings.enableFigures : true;
-      document.getElementById('includeShapeType').checked = settings.includeShapeType !== undefined ? settings.includeShapeType : true;
-      document.getElementById('includeShapeSize').checked = settings.includeShapeSize !== undefined ? settings.includeShapeSize : true;
-      document.getElementById('includeFillColor').checked = settings.includeFillColor !== undefined ? settings.includeFillColor : true;
-      document.getElementById('includeStrokeSettings').checked = settings.includeStrokeSettings !== undefined ? settings.includeStrokeSettings : true;
-      document.getElementById('includeCornerRadius').checked = settings.includeCornerRadius !== undefined ? settings.includeCornerRadius : true;
-      document.getElementById('includeFigureOpacity').checked = settings.includeFigureOpacity !== undefined ? settings.includeFigureOpacity : true;
-
-      // Update section states (без сохранения, так как мы только загружаем)
-      toggleSection('textLayerSection', settings.enableTextLayers !== undefined ? settings.enableTextLayers : true, false);
-      toggleSection('containerLayerSection', settings.enableContainers !== undefined ? settings.enableContainers : true, false);
-      toggleSection('figureLayerSection', settings.enableFigures !== undefined ? settings.enableFigures : true, false);
-    }
-
-    // Save settings when window is about to close
-    window.addEventListener('beforeunload', saveSettings);
-
+    // Handle messages from plugin
     window.onmessage = (event) => {
       const message = event.data.pluginMessage;
       
       if (message.type === 'load-settings') {
-        // Восстанавливаем previousStates, если они были сохранены (для совместимости)
-        if (message.previousStates) {
-          Object.assign(previousStates, message.previousStates);
-        }
-        applySettings(message.settings);
+        applySettings(message.settings || {});
       }
     };
+
+    // Save settings on window close
+    window.addEventListener('beforeunload', saveSettings);
   </script>
 </body>
 </html> 
