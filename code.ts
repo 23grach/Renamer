@@ -84,7 +84,7 @@ type ContainerNode = FrameNode | GroupNode;
  * @param node The SceneNode to extract text from.
  * @returns The character content if it's a TextNode, otherwise an empty string.
  */
-function getTextContent(node: SceneNode): string {
+function _getTextContent(node: SceneNode): string {
   return node.type === 'TEXT' ? node.characters : '';
 }
 
@@ -145,7 +145,7 @@ function getLayerText(count: number): string {
  * @param parentNode The parent container node.
  * @returns The header text found in the single child container, or an empty string.
  */
-function findHeaderFromChild(parentNode: ContainerNode): string {
+function _findHeaderFromChild(parentNode: ContainerNode): string {
   // Using type guard for child.type
   const childContainers = parentNode.children.filter((child): child is ContainerNode =>
     isContainerType(child.type)
@@ -334,6 +334,7 @@ async function getTextStyleName(node: TextNode): Promise<string | null> {
 async function generateName(node: SceneNode, settings: PluginSettings): Promise<string> {
   try {
     const nameParts: (string | null)[] = [];
+    console.log(`Generating name for ${node.type} node:`, node.name, 'with settings:', settings);
 
     // Text Layers
     if (node.type === 'TEXT' && settings.enableTextLayers) {
@@ -440,9 +441,11 @@ async function generateName(node: SceneNode, settings: PluginSettings): Promise<
 // Асинхронная рекурсивная функция переименования
 async function renameNodeRecursively(node: SceneNode, settings: PluginSettings): Promise<void> {
   try {
+    console.log(`Processing node: ${node.type} - "${node.name}" (ID: ${node.id})`);
     let shouldRecurse = false; // Flag to control recursion
     // Skip renaming components themselves
     if (isComponent(node)) {
+        console.log('Node is a component, skipping rename but checking for recursion');
         // Only recurse into components if they can have children (are containers)
         shouldRecurse = 'children' in node && isContainerType(node.type);
     } else {
@@ -451,7 +454,10 @@ async function renameNodeRecursively(node: SceneNode, settings: PluginSettings):
         console.log('renameNodeRecursively:', { nodeId: node.id, nodeName: node.name, generatedName: newName });
         // Only assign if the name actually changed
         if (newName !== node.name) {
+            console.log(`Renaming "${node.name}" to "${newName}"`);
             node.name = newName;
+        } else {
+            console.log(`Name unchanged for "${node.name}"`);
         }
         // Allow recursion for any node that can have children
         shouldRecurse = 'children' in node && isContainerType(node.type);
@@ -473,17 +479,25 @@ async function renameNodeRecursively(node: SceneNode, settings: PluginSettings):
 }
 
 // Асинхронная функция для переименования выбранных слоёв
-async function renameSelectedLayers(): Promise<void> {
+async function renameSelectedLayers(providedSettings?: PluginSettings): Promise<void> {
   try {
     const selection = figma.currentPage.selection;
+    console.log('renameSelectedLayers called with selection:', selection.length, 'nodes');
+    
     if (selection.length === 0) {
+      console.log('No selection found');
       figma.notify('Please select at least one layer to rename.');
       // Keep plugin open if settings might be displayed
       return;
     }
-    // Load settings or use defaults
-    // Ensure DEFAULT_SETTINGS includes the new boolean flags
-    const settings = await figma.clientStorage.getAsync('settings') || DEFAULT_SETTINGS;
+    
+    console.log('Selected nodes:', selection.map(node => ({ id: node.id, name: node.name, type: node.type })));
+    
+    // Use provided settings or load from storage
+    const settings = providedSettings || await figma.clientStorage.getAsync('settings') || DEFAULT_SETTINGS;
+    
+    console.log('Renaming with settings:', settings);
+    console.log('Using provided settings:', !!providedSettings);
     let renamedCount = 0;
     const originalNames = new Map<string, string>(); // Store original names to check for changes
     // First pass: store original names
@@ -511,7 +525,11 @@ async function renameSelectedLayers(): Promise<void> {
         // This could be because only components were selected, or names didn't change based on settings
         figma.notify('No selected layers required renaming with the current settings.');
      }
-     figma.closePlugin(); // Explicitly close after run command finishes
+     
+     // Only close plugin if we're not in settings mode (i.e., no UI shown)
+     if (!providedSettings) {
+       figma.closePlugin(); // Close if called directly from menu
+     }
   } catch (e) {
     console.error("Error during layer renaming process:", e);
     figma.notify(
@@ -531,21 +549,47 @@ async function renameSelectedLayers(): Promise<void> {
 async function handleSettingsCommand(): Promise<void> {
   // Load saved settings
   const savedSettings = await figma.clientStorage.getAsync('settings') || DEFAULT_SETTINGS;
+  const savedPreviousStates = await figma.clientStorage.getAsync('previousStates') || {};
   
   figma.showUI(__html__, { width: 300, height: 640 });
   
   // Send saved settings to UI
   figma.ui.postMessage({ 
     type: 'load-settings',
-    settings: savedSettings
+    settings: savedSettings,
+    previousStates: savedPreviousStates
   });
 }
 
 // Handle messages from UI
 figma.ui.onmessage = async (msg) => {
+  console.log('Received message from UI:', msg);
+  
   if (msg.type === 'save-settings') {
-    // Save settings to client storage
-    await figma.clientStorage.setAsync('settings', msg.settings);
+    try {
+      // Save settings to client storage
+      await figma.clientStorage.setAsync('settings', msg.settings);
+      // Save previousStates to client storage
+      if (msg.previousStates) {
+        await figma.clientStorage.setAsync('previousStates', msg.previousStates);
+      }
+      console.log('Settings saved successfully:', msg.settings);
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      figma.notify('Error saving settings. Please try again.', { error: true });
+    }
+  } else if (msg.type === 'rename-with-settings') {
+    console.log('Starting rename with settings from UI:', msg.settings);
+    try {
+      // Rename layers with current settings from UI
+      await renameSelectedLayers(msg.settings);
+      console.log('Rename completed successfully');
+    } catch (error) {
+      console.error('Error during rename:', error);
+      figma.notify('Error during renaming. Check console for details.', { error: true });
+    }
+  } else {
+    console.log('Unknown message type:', msg.type);
   }
 };
 
@@ -553,7 +597,7 @@ figma.ui.onmessage = async (msg) => {
 figma.on('run', async ({ command }) => {
   if (command === 'settings') {
     await handleSettingsCommand();
-  } else {
+  } else if (command === 'run') {
     // Use await since renameSelectedLayers is now async
     await renameSelectedLayers();
   }

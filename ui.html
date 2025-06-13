@@ -18,20 +18,7 @@
   flex: 1;
 }
 
-.layer-type-title {
-  font-size: 12px;
-  font-weight: 800;
-  margin: 0;
-  flex: 1;
-}
 
-.layer-type-title {
-  font-size: 12x;
-  font-weight: 600;
-  color: #1E1E1E;
-  margin: 0;
-  flex: 1;
-}
 
 .setting-item {
   display: flex;
@@ -97,40 +84,23 @@
 .group-toggle {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   margin-bottom: 8px;
+  gap: 8px;
 }
 
-.group-switch {
-  appearance: none;
-  width: 36px;
-  height: 20px;
-  background: #ccc;
-  border-radius: 999px;
-  position: relative;
-  outline: none;
-  cursor: pointer;
-  transition: background 0.2s ease;
+.group-checkbox {
+  flex-shrink: 0;
+  margin: 0;
+  width: 14px;
+  height: 14px;
 }
 
-.group-switch::before {
-  content: "";
-  width: 16px;
-  height: 16px;
-  background: #fff;
-  border-radius: 50%;
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  transition: transform 0.2s ease;
-}
-
-.group-switch:checked {
-  background: #18A0FB;
-}
-
-.group-switch:checked::before {
-  transform: translateX(16px);
+.layer-type-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1E1E1E;
+  margin: 0;
+  flex: 1;
 }
 
 .group-disabled .setting-item {
@@ -139,6 +109,34 @@
 }
 
 .group-settings {
+  margin-left: 22px;
+}
+
+.action-buttons {
+  padding: 16px 20px;
+  border-top: 1px solid #E5E5E5;
+  background: white;
+}
+
+.rename-button {
+  width: 100%;
+  padding: 12px;
+  background: #18A0FB;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.rename-button:hover {
+  background: #1592E6;
+}
+
+.rename-button:active {
+  background: #0F7BCF;
 }
 
   </style>
@@ -148,8 +146,8 @@
     <!-- Text Layers -->
     <div class="section" id="textLayerSection">
       <div class="group-toggle">
-        <div class="layer-type-header">🅰️ Text Layers</div>
-        <input type="checkbox" class="group-switch" id="toggleTextGroup" checked>
+        <input type="checkbox" class="group-checkbox" id="toggleTextGroup" checked>
+        <label for="toggleTextGroup" class="layer-type-header">🅰️ Text Layers</label>
       </div>
       <div class="group-settings">
         <div class="setting-item">
@@ -174,8 +172,8 @@
     <!-- Containers -->
     <div class="section" id="containerLayerSection">
       <div class="group-toggle">
-        <div class="layer-type-header">📦 Containers</div>
-        <input type="checkbox" class="group-switch" id="toggleContainerGroup" checked>
+        <input type="checkbox" class="group-checkbox" id="toggleContainerGroup" checked>
+        <label for="toggleContainerGroup" class="layer-type-header">📦 Containers</label>
       </div>
       <div class="group-settings">
         <div class="setting-item">
@@ -208,8 +206,8 @@
     <!-- Figures -->
     <div class="section" id="figureLayerSection">
       <div class="group-toggle">
-        <div class="layer-type-header">🧩 Figures</div>
-        <input type="checkbox" class="group-switch" id="toggleFigureGroup" checked>
+        <input type="checkbox" class="group-checkbox" id="toggleFigureGroup" checked>
+        <label for="toggleFigureGroup" class="layer-type-header">🧩 Figures</label>
       </div>
       <div class="group-settings">
         <div class="setting-item">
@@ -240,12 +238,19 @@
     </div>
   </div>
 
+  <div class="action-buttons">
+    <button id="renameButton" class="rename-button">Rename Selected Layers</button>
+  </div>
+
   <div class="footer">
     Made with ❤️ by <a href="https://gr-ch.ru" target="_blank">grach</a>
     <div class="version"><a href="https://github.com/23grach/Renamer" target="_blank">v5.0.0</a></div>
   </div>
 
   <script>
+    // Хранилище для предыдущих состояний чекбоксов
+    const previousStates = {};
+
     // Function to get current settings
     function getCurrentSettings() {
       return {
@@ -282,40 +287,65 @@
       parent.postMessage({ 
         pluginMessage: { 
           type: 'save-settings',
-          settings
+          settings,
+          previousStates
         }
       }, '*');
     }
 
     // Function to toggle section enabled state
-    function toggleSection(sectionId, enabled) {
+    function toggleSection(sectionId, enabled, shouldSave = true) {
       const section = document.getElementById(sectionId);
+      const checkboxes = section.querySelectorAll('.group-settings input[type="checkbox"]');
+      
       if (enabled) {
+        // Включить группу: включить все чекбоксы внутри
         section.classList.remove('group-disabled');
+        checkboxes.forEach(checkbox => {
+          checkbox.checked = true;
+        });
       } else {
+        // Выключить группу: выключить все чекбоксы внутри
+        checkboxes.forEach(checkbox => {
+          checkbox.checked = false;
+        });
         section.classList.add('group-disabled');
+      }
+      
+      // Сохраняем настройки после изменения состояния чекбоксов
+      if (shouldSave) {
+        saveSettings();
       }
     }
 
     // Add event listeners to group toggles
     document.getElementById('toggleTextGroup').addEventListener('change', (e) => {
       toggleSection('textLayerSection', e.target.checked);
-      saveSettings();
     });
 
     document.getElementById('toggleContainerGroup').addEventListener('change', (e) => {
       toggleSection('containerLayerSection', e.target.checked);
-      saveSettings();
     });
 
     document.getElementById('toggleFigureGroup').addEventListener('change', (e) => {
       toggleSection('figureLayerSection', e.target.checked);
-      saveSettings();
     });
 
     // Add event listeners to all checkboxes
     document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
       checkbox.addEventListener('change', saveSettings);
+    });
+
+    // Add event listener to rename button
+    document.getElementById('renameButton').addEventListener('click', () => {
+      const settings = getCurrentSettings();
+      console.log('Sending rename request with settings:', settings);
+      parent.postMessage({ 
+        pluginMessage: { 
+          type: 'rename-with-settings',
+          settings
+        }
+      }, '*');
     });
 
     // Function to apply settings to UI
@@ -345,10 +375,10 @@
       document.getElementById('includeCornerRadius').checked = settings.includeCornerRadius !== undefined ? settings.includeCornerRadius : true;
       document.getElementById('includeFigureOpacity').checked = settings.includeFigureOpacity !== undefined ? settings.includeFigureOpacity : true;
 
-      // Update section states
-      toggleSection('textLayerSection', settings.enableTextLayers !== undefined ? settings.enableTextLayers : true);
-      toggleSection('containerLayerSection', settings.enableContainers !== undefined ? settings.enableContainers : true);
-      toggleSection('figureLayerSection', settings.enableFigures !== undefined ? settings.enableFigures : true);
+      // Update section states (без сохранения, так как мы только загружаем)
+      toggleSection('textLayerSection', settings.enableTextLayers !== undefined ? settings.enableTextLayers : true, false);
+      toggleSection('containerLayerSection', settings.enableContainers !== undefined ? settings.enableContainers : true, false);
+      toggleSection('figureLayerSection', settings.enableFigures !== undefined ? settings.enableFigures : true, false);
     }
 
     // Save settings when window is about to close
@@ -358,6 +388,10 @@
       const message = event.data.pluginMessage;
       
       if (message.type === 'load-settings') {
+        // Восстанавливаем previousStates, если они были сохранены (для совместимости)
+        if (message.previousStates) {
+          Object.assign(previousStates, message.previousStates);
+        }
         applySettings(message.settings);
       }
     };
