@@ -80,8 +80,8 @@ const mockFigma = {
   on: jest.fn()
 };
 
-global.figma = mockFigma as any;
-global.__html__ = '<div>Mock UI</div>';
+(global as any).figma = mockFigma;
+(global as any).__html__ = '<div>Mock UI</div>';
 
 // === MOCK NODE FACTORIES ===
 
@@ -97,7 +97,7 @@ function createMockTextNode(options: {
   return {
     type: 'TEXT',
     name: options.name || 'Text',
-    characters: options.characters || 'Sample Text',
+    characters: options.characters !== undefined ? options.characters : 'Sample Text',
     fills: options.fills || [{ type: 'SOLID', color: { r: 0, g: 0, b: 0 }, visible: true }],
     textStyleId: options.textStyleId || '',
     fontSize: options.fontSize || 16,

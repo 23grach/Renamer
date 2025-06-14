@@ -690,4 +690,24 @@ figma.on('run', async ({ command }) => {
   } else if (command === 'run') {
     await renameSelectedLayers();
   }
-}); 
+});
+
+// === EXPORTS FOR TESTING ===
+export {
+  DEFAULT_SETTINGS,
+  PluginSettings,
+  isShapeType,
+  isContainerType,
+  isComponentType,
+  colorToHex,
+  getTextContent,
+  getElementsCountText,
+  getLayerText,
+  formatCornerRadius,
+  generateTextName,
+  generateShapeName,
+  generateContainerName,
+  generateName,
+  renameSelectedLayers,
+  handleSettingsCommand
+}; 
